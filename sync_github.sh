@@ -2,7 +2,7 @@
 # Отправляет папку github/ (index.html, robots.txt) в репозиторий ecovelle/utro на GitHub.
 # Запускается launchd автоматически (при изменении файлов и в 08:20) или вручную: bash sync_github.sh
 set -e
-DIR="$HOME/Desktop/OZON Analytics/github"
+DIR="$HOME/utro/github"
 LOG="$HOME/Library/Logs/utro-sync.log"
 TOKEN_FILE="$HOME/.config/utro/gh_token"
 REPO="ecovelle/utro"

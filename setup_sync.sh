@@ -1,11 +1,11 @@
 #!/bin/bash
 # Разовая настройка автоматической отправки сводки на GitHub Pages. Запуск: bash setup_sync.sh
 set -e
-DIR="$HOME/Desktop/OZON Analytics/github"
+DIR="$HOME/utro/github"
 PLIST="$HOME/Library/LaunchAgents/com.ecovelle.utro-sync.plist"
 mkdir -p "$HOME/.config/utro" "$HOME/Library/LaunchAgents" "$HOME/Library/Logs"
 # 1. токен GitHub: берём из config/env.txt (строка GH_TOKEN=...) или спрашиваем
-ENV="$HOME/Desktop/OZON Analytics/config/env.txt"
+ENV="$HOME/utro/config/env.txt"
 TOKEN=""
 [ -f "$ENV" ] && TOKEN=$(grep '^GH_TOKEN=' "$ENV" | cut -d= -f2-)
 if [ -z "$TOKEN" ]; then read -r -s -p "Вставь GitHub-токен (github_pat_...): " TOKEN; echo; fi
