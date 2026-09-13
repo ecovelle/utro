@@ -1,0 +1,361 @@
+<title>Утро Ecovelle</title>
+<style>
+:root{color-scheme:light;
+  --bg:#f3f5f8;--surface:#ffffff;--surface-2:#eef1f5;--line:#dfe4ea;--grid:#e6eaf0;
+  --ink:#0f1720;--ink-2:#4b5563;--muted:#7b8794;
+  --oz:#2a78d6;--oz-soft:#e3edfa;--oz-deep:#1c5cab;--wb:#eb6834;--wb-soft:#fdeae1;--wb-deep:#b8461d;
+  --neutral-bar:#9aa5b1;
+  --good:#0ca30c;--good-text:#0a7a0a;--warn:#f5b400;--warn-text:#8a5a00;--crit:#d03b3b;--crit-soft:#fbe6e6;--warn-soft:#fff3cf;--good-soft:#e4f5e4;
+  --shadow:0 1px 2px rgba(15,23,32,.05),0 6px 20px -12px rgba(15,23,32,.15)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;
+  --bg:#0f1216;--surface:#171b21;--surface-2:#20262e;--line:#2a313a;--grid:#262d36;
+  --ink:#f2f4f7;--ink-2:#c1c8d1;--muted:#8a94a0;--oz:#4a90e2;--oz-soft:#1a2a40;--oz-deep:#8fb8f0;--wb:#e8693a;--wb-soft:#3a2418;--wb-deep:#f0a07a;
+  --neutral-bar:#6b7683;--good-text:#4fd34f;--warn-text:#f5c65a;--crit-soft:#3a1c1c;--warn-soft:#3a3010;--good-soft:#173a17;--shadow:none}}
+:root[data-theme="dark"]{color-scheme:dark;
+  --bg:#0f1216;--surface:#171b21;--surface-2:#20262e;--line:#2a313a;--grid:#262d36;
+  --ink:#f2f4f7;--ink-2:#c1c8d1;--muted:#8a94a0;--oz:#4a90e2;--oz-soft:#1a2a40;--oz-deep:#8fb8f0;--wb:#e8693a;--wb-soft:#3a2418;--wb-deep:#f0a07a;
+  --neutral-bar:#6b7683;--good-text:#4fd34f;--warn-text:#f5c65a;--crit-soft:#3a1c1c;--warn-soft:#3a3010;--good-soft:#173a17;--shadow:none}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1120px;margin:0 auto;padding:22px 16px 60px}
+h1{font-size:30px;font-weight:800;letter-spacing:-.02em;margin:0;line-height:1.1}
+h2{font-size:19px;font-weight:800;margin:0;letter-spacing:-.01em}
+h3{font-size:14.5px;font-weight:700;margin:0}
+.sub{color:var(--ink-2);margin:3px 0 0;font-size:14px}
+.eyebrow{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.sec{margin-top:26px}
+.sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.sec-h .hint{font-size:13px;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:var(--shadow);min-width:0}
+.grid{display:grid;gap:14px}
+.two{grid-template-columns:1fr 1fr}
+@media (max-width:800px){.two{grid-template-columns:1fr}}
+.plat{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.plat .logo{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-weight:900;font-size:13px;color:#fff;letter-spacing:.02em}
+.plat.oz .logo{background:var(--oz)} .plat.wb .logo{background:var(--wb)}
+.plat .t{font-weight:800;font-size:16px} .plat .s{font-size:12.5px;color:var(--muted)}
+.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media (min-width:560px){.tiles{grid-template-columns:repeat(4,1fr)}}
+.tile{background:var(--surface-2);border-radius:12px;padding:12px 12px 10px;min-width:0}
+.tile .l{font-size:12px;color:var(--ink-2);font-weight:600;display:flex;align-items:center;gap:6px}
+.tile .v{font-size:30px;font-weight:800;letter-spacing:-.03em;line-height:1.05;margin-top:4px;font-variant-numeric:tabular-nums}
+.tile .v small{font-size:13px;font-weight:600;color:var(--muted);margin-left:3px;letter-spacing:0}
+.tile .d{font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.35}
+.tile.big .v{font-size:38px}
+.up{color:var(--good-text);font-weight:700} .down{color:var(--crit);font-weight:700} .flat{color:var(--muted);font-weight:700}
+.q{display:inline-grid;place-items:center;width:15px;height:15px;border-radius:50%;background:var(--line);color:var(--ink-2);font-size:10px;font-weight:800;cursor:help;flex:none}
+.hero{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:var(--shadow)}
+.hero p{margin:8px 0 0;font-size:16px;line-height:1.5;color:var(--ink-2)}
+.hero p b{color:var(--ink)}
+.stamp{display:inline-flex;gap:8px;align-items:center;font-size:12.5px;color:var(--ink-2);background:var(--surface-2);padding:6px 10px;border-radius:999px;margin-top:10px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--good)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:700;padding:8px 10px;border-bottom:1px solid var(--line)}
+td{padding:10px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.big{font-size:17px;font-weight:800}
+.tbl-wrap{overflow-x:auto}
+.mtab th:first-child,.mtab td:first-child{color:var(--ink-2);font-weight:600}
+.mtab td .delta{display:block;font-size:12px;font-weight:600;margin-top:1px}
+.mtab tbody tr td:nth-child(2){font-weight:800}
+.chart-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-2);margin-top:8px}
+.chart-legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:11px;height:11px;border-radius:3px;display:inline-block}
+svg{display:block;width:100%;height:auto;overflow:visible}
+.ax{fill:var(--muted);font-size:11px}
+.gl{stroke:var(--grid)}
+.bars{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(70px,2fr) auto;gap:7px 10px;align-items:center;font-size:13.5px}
+.bars .trk{height:10px;background:var(--surface-2);border-radius:5px;position:relative;overflow:hidden}
+.bars .trk i{position:absolute;left:0;top:0;bottom:0;border-radius:5px}
+.bars .n{font-variant-numeric:tabular-nums;color:var(--ink-2);font-size:13px;white-space:nowrap}
+.bars .lbl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.split{display:flex;height:14px;border-radius:7px;overflow:hidden;gap:2px;margin:10px 0 6px}
+.split i{display:block}
+.split-l{display:flex;justify-content:space-between;font-size:13px;color:var(--ink-2)}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.pill.ok{color:var(--good-text);background:var(--good-soft)} .pill.warn{color:var(--warn-text);background:var(--warn-soft)} .pill.crit{color:var(--crit);background:var(--crit-soft)} .pill.mute{color:var(--ink-2);background:var(--surface-2)}
+.att{display:flex;flex-direction:column;gap:10px}
+.a{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;padding:14px;border-radius:14px;border:1px solid var(--line);background:var(--surface)}
+.a .n{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;font-weight:800;font-size:13px;color:#fff}
+.a.crit .n{background:var(--crit)} .a.warn .n{background:var(--warn);color:#3a2a00} .a.info .n{background:var(--oz)} .a.good .n{background:var(--good)}
+.a h3 span{font-weight:600;color:var(--muted);font-size:12px;margin-left:8px}
+.a p{margin:4px 0 0;font-size:14px;color:var(--ink-2)}
+.a p b{color:var(--ink);font-weight:700}
+.a .act{margin-top:8px;font-size:14px;color:var(--ink);font-weight:600;padding:8px 10px;background:var(--surface-2);border-radius:8px}
+.a .act::before{content:"Что сделать: ";color:var(--muted);font-weight:700}
+.whs{font-size:12.5px;color:var(--muted);margin-top:2px}
+.rev{border-left:3px solid var(--line);padding:6px 12px;margin-top:10px;font-size:13.5px}
+.rev.low{border-color:var(--crit)}
+.rev .m{color:var(--muted);font-size:12px}
+.themes{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.themes span{font-size:12.5px;background:var(--surface-2);border-radius:6px;padding:4px 9px;color:var(--ink-2)}
+.themes span b{color:var(--ink)}
+.promo{display:grid;grid-template-columns:auto 1fr auto;gap:8px 12px;align-items:center;font-size:14px;padding:9px 0;border-bottom:1px dashed var(--line)}
+.promo:last-child{border-bottom:0}
+.promo .when{font-variant-numeric:tabular-nums;color:var(--ink-2);font-size:13px;white-space:nowrap}
+.tag{display:inline-flex;align-items:center;font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:6px}
+.tag.oz{background:var(--oz-soft);color:var(--oz-deep)} .tag.wb{background:var(--wb-soft);color:var(--wb-deep)}
+.note{font-size:13px;color:var(--ink-2);margin-top:10px;line-height:1.5}
+.gloss{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px 18px;font-size:13.5px;color:var(--ink-2)}
+.gloss b{color:var(--ink)}
+footer{margin-top:28px;font-size:12.5px;color:var(--muted);line-height:1.6}
+.tt{position:fixed;pointer-events:none;background:var(--ink);color:var(--bg);font-size:12.5px;padding:7px 10px;border-radius:8px;opacity:0;transition:opacity .12s;z-index:10;line-height:1.4;max-width:260px}
+</style>
+
+<div class="wrap">
+<section class="hero">
+  <div class="eyebrow">Ежедневная сводка · Ozon + Wildberries · прокладки Ecovelle</div>
+  <h1 id="h1">Утро</h1>
+  <p id="lead"></p>
+  <div class="stamp"><span class="dot"></span>Данные площадок на <b id="stamp"></b></div>
+</section>
+
+<section class="sec">
+  <div class="sec-h"><h2>Вчера</h2><span class="hint" id="ydate"></span></div>
+  <div class="grid two">
+    <div class="card"><div class="plat oz"><div class="logo">OZ</div><div><div class="t">Ozon</div><div class="s">Казахстан → Россия · в тенге</div></div></div><div class="tiles" id="ozY"></div></div>
+    <div class="card"><div class="plat wb"><div class="logo">WB</div><div><div class="t">Wildberries</div><div class="s">Россия, Казахстан, СНГ · в рублях</div></div></div><div class="tiles" id="wbY"></div></div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="sec-h"><h2>В пути сейчас</h2><span class="hint">Заказано, но покупатель ещё не получил — деньги придут после вручения</span></div>
+  <div class="grid two">
+    <div class="card"><div class="plat oz"><div class="logo">OZ</div><div><div class="t">Ozon</div><div class="s">по схемам доставки</div></div></div><div class="tiles" id="ozTransit"></div><div id="ozTransitSplit"></div></div>
+    <div class="card"><div class="plat wb"><div class="logo">WB</div><div><div class="t">Wildberries</div><div class="s">к покупателям и обратно на склады</div></div></div><div class="tiles" id="wbTransit"></div><p class="note" id="wbTransitNote"></p></div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="sec-h"><h2 id="mTitle">Месяц</h2><span class="hint" id="mHint"></span></div>
+  <div class="grid two">
+    <div class="card"><div class="plat oz"><div class="logo">OZ</div><div><div class="t">Ozon</div><div class="s">тенге</div></div></div><div class="tbl-wrap"><table class="mtab" id="ozM"></table></div></div>
+    <div class="card"><div class="plat wb"><div class="logo">WB</div><div><div class="t">Wildberries</div><div class="s">рубли</div></div></div><div class="tbl-wrap"><table class="mtab" id="wbM"></table></div><p class="note" id="wbMNote"></p></div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="sec-h"><h2>Заказано и выкуплено по дням</h2><span class="hint">Последние 30 дней. Столбик — заказано, тёмная полоска — выкуплено (доставлено) в этот день</span></div>
+  <div class="grid two">
+    <div class="card"><div class="plat oz"><div class="logo">OZ</div><div><div class="t">Ozon</div><div class="s">упаковок в день</div></div></div><div id="ozChart"></div><div class="chart-legend"><span><i class="sw" style="background:var(--oz)"></i>Заказано</span><span><i class="sw" style="background:var(--ink)"></i>Выкуплено (доставлено)</span></div></div>
+    <div class="card"><div class="plat wb"><div class="logo">WB</div><div><div class="t">Wildberries</div><div class="s">упаковок в день</div></div></div><div id="wbChart"></div><div class="chart-legend"><span><i class="sw" style="background:var(--wb)"></i>Заказано</span><span><i class="sw" style="background:var(--ink)"></i>Выкуплено</span></div></div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="sec-h"><h2>Куда едут заказы</h2><span class="hint">За период с 1 августа, упаковок</span></div>
+  <div class="grid two">
+    <div class="card"><div class="plat oz"><div class="logo">OZ</div><div><div class="t">Ozon</div><div class="s">города покупателей</div></div></div><div id="ozGeo"></div></div>
+    <div class="card"><div class="plat wb"><div class="logo">WB</div><div><div class="t">Wildberries</div><div class="s">страны и регионы</div></div></div><div id="wbGeo"></div></div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="sec-h"><h2>Отмены и отказы</h2><span class="hint">Сколько заказов не превратились в деньги и почему</span></div>
+  <div class="grid two">
+    <div class="card"><div class="plat oz"><div class="logo">OZ</div><div><div class="t">Ozon</div></div></div><div id="ozCanc"></div></div>
+    <div class="card"><div class="plat wb"><div class="logo">WB</div><div><div class="t">Wildberries</div></div></div><div id="wbCanc"></div></div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="sec-h"><h2>Требует внимания</h2><span class="hint">По убыванию важности</span></div>
+  <div class="att" id="att"></div>
+</section>
+
+<section class="sec">
+  <div class="sec-h"><h2>Остатки на складах</h2><span class="hint">И на сколько дней их хватит при текущем темпе</span></div>
+  <div class="card"><div class="tbl-wrap"><table id="stockTbl"></table></div><p class="note" id="stockNote"></p></div>
+</section>
+
+<section class="sec">
+  <div class="grid two">
+    <div class="card"><div class="plat wb"><div class="logo">WB</div><div><div class="t">Отзывы и вопросы</div><div class="s">за последние 30 дней</div></div></div><div id="fb"></div></div>
+    <div class="card"><h2 style="margin-bottom:10px">Акции и бустинг</h2><div id="promos"></div></div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="card"><h2 style="margin-bottom:10px">Как читать цифры</h2><div class="gloss">
+    <div><b>Заказано</b> — покупатель оформил заказ. Ещё не деньги.</div>
+    <div><b>Выкуплено / доставлено</b> — товар вручён, площадка начислила деньги за него.</div>
+    <div><b>В пути</b> — заказано, но ещё едет к покупателю. Часть отменится или не заберут.</div>
+    <div><b>К выплате</b> — что реально придёт тебе после комиссии и логистики площадки.</div>
+    <div><b>FBO</b> — товар лежит на складе площадки, она сама собирает и везёт. <b>FBS</b> — товар на твоём складе, собираешь и отгружаешь сам.</div>
+    <div><b>Дней запаса</b> — остаток ÷ средние продажи в день. Меньше 14 — срочно поставка.</div>
+  </div></div>
+</section>
+
+<footer id="foot"></footer>
+</div>
+<div class="tt" id="tt"></div>
+
+<script id="data" type="application/json">__DATA__</script>
+<script>
+const D=JSON.parse(document.getElementById('data').textContent);
+const fmt=n=>Math.round(n).toLocaleString('ru-RU').replace(/,/g,' ');
+const tg=n=>fmt(n)+' ₸', rb=n=>fmt(n)+' ₽';
+const pct=(a,b)=>b?(a/b*100):0;
+const pctS=(a,b)=>(pct(a,b)).toFixed(1).replace('.',',')+' %';
+const dlt=(a,b,txt='')=>{if(!b&&!a)return `<span class="flat">— ${txt}</span>`;if(!b)return `<span class="flat">нет данных ${txt}</span>`;const p=(a-b)/b*100;if(Math.abs(p)<0.5)return `<span class="flat">без изменений ${txt}</span>`;return `<span class="${p>0?'up':'down'}">${p>0?'+':'−'}${Math.abs(p).toFixed(0)} %</span> ${txt}`};
+const MONTHS=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+const MN=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const ru=d=>{const x=new Date(d+'T00:00:00');return x.getDate()+' '+MONTHS[x.getMonth()]};
+const ruS=d=>{const x=new Date(d+'T00:00:00');return x.getDate()+'.'+String(x.getMonth()+1).padStart(2,'0')};
+const wd=d=>new Date(d+'T00:00:00').toLocaleDateString('ru-RU',{weekday:'long'});
+const mName=m=>MN[+m.slice(5,7)-1];
+document.getElementById('stamp').textContent=new Date(D.generated).toLocaleString('ru-RU',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'});
+document.getElementById('h1').textContent='Утро '+ru(D.today);
+document.getElementById('ydate').textContent=wd(D.yesterday)+', '+ru(D.yesterday);
+const O=D.oz,W=D.wb;
+document.getElementById('lead').innerHTML=`Вчера на Ozon заказали <b>${O.y.ordered} упаковок</b> на ${tg(O.y.rev)} (${dlt(O.y.ordered,O.y2.ordered,'к позавчера')}), доставили <b>${O.y.delivered}</b> — к выплате ${tg(O.y.payout)}. На Wildberries заказов <b>${W.y.ordered}</b>, выкупов ${W.y.buy}. Неделя на Ozon ${dlt(O.w.ordered,O.pw.ordered,'к прошлой')}.`;
+
+const tile=(l,v,unit,d,help,big)=>`<div class="tile ${big?'big':''}"><div class="l">${l}${help?`<span class="q" title="${help}">?</span>`:''}</div><div class="v">${v}${unit?`<small>${unit}</small>`:''}</div><div class="d">${d}</div></div>`;
+// ---- Вчера
+document.getElementById('ozY').innerHTML=
+ tile('Заказано',O.y.ordered,'шт',`${tg(O.y.rev)} · ${dlt(O.y.ordered,O.y2.ordered,'к позавчера')}`,'Оформлено заказов за день, без отменённых')+
+ tile('Выкуплено',O.y.delivered,'шт',`начислено ${tg(O.y.accrued)}`,'Доставлено покупателям за день — Ozon начислил деньги')+
+ tile('К выплате',fmt(O.y.payout),'₸',`после комиссии и логистики`,'Сумма, которая придёт за вчерашние доставки')+
+ tile('За неделю',O.w.ordered,'шт',`${tg(O.w.rev)} · ${dlt(O.w.ordered,O.pw.ordered,'к прошлой')}`,'7 дней до вчера включительно против предыдущих 7');
+document.getElementById('wbY').innerHTML=
+ tile('Заказано',W.y.ordered,'шт',W.y.ordered?`${rb(W.y.rev)}`:'заказов не было','Оформлено заказов за день, без отменённых')+
+ tile('Выкуплено',W.y.buy,'шт',`к выплате ${rb(W.y.payout)}`,'Покупатели забрали товар — WB начислил деньги')+
+ tile('Отменено',W.y.canc,'шт',W.y.canc?'за день':'—','Отказы и отмены за день')+
+ tile('За неделю',W.w.ordered,'шт',`выкупов ${W.w.buy} · ${dlt(W.w.ordered,W.pw.ordered,'к прошлой')}`,'7 дней до вчера включительно');
+
+// ---- В пути
+const T=O.transit;const tAll=(T.fbo?.units||0)+(T.fbs?.units||0), tSum=(T.fbo?.sum||0)+(T.fbs?.sum||0);
+document.getElementById('ozTransit').innerHTML=
+ tile('Всего в пути',tAll,'шт',`на ${tg(tSum)} по цене продажи`,'Заказы со статусами: ожидает сборки, ожидает отгрузки, доставляется',true)+
+ tile('FBO',T.fbo?.units||0,'шт',`${tg(T.fbo?.sum||0)} · со складов Ozon`,'Со складов Ozon (Астана, Алматы)')+
+ tile('FBS',T.fbs?.units||0,'шт',`${tg(T.fbs?.sum||0)} · с твоего склада`,'Отгружены с собственного склада в Алматы')+
+ tile('Ожидаемая выплата',fmt(tSum*0.8),'₸',`≈ 80 % от суммы, если доедут все`,'По фактической доле выплат Ozon за август–сентябрь');
+document.getElementById('ozTransitSplit').innerHTML=tAll?`<div class="split"><i style="width:${pct(T.fbo.units,tAll)}%;background:var(--oz)"></i><i style="width:${pct(T.fbs.units,tAll)}%;background:var(--oz-deep)"></i></div><div class="split-l"><span>FBO ${pctS(T.fbo.units,tAll)}</span><span>FBS ${pctS(T.fbs.units,tAll)}</span></div>`:'';
+const WT=W.transit||{};
+document.getElementById('wbTransit').innerHTML=
+ tile('К покупателям',WT.n||0,'шт',`на ${rb(WT.sum||0)}`,'Заказано и ещё не выкуплено и не отменено',true)+
+ tile('Возвраты на склад',fmt(W.returning),'шт','невыкупы едут обратно на склады WB','После приёмки снова станут доступным остатком')+
+ tile('Микс / Ежедневные',`${WT.byArt?.EcovelleMix||0} / ${WT.byArt?.ecovelle155||0}`,'',`в пути к покупателям`,'')+
+ tile('Дневные / Ночные',`${WT.byArt?.Ecovelle245||0} / ${WT.byArt?.Ecovelle290||0}`,'',`в пути к покупателям`,'');
+document.getElementById('wbTransitNote').textContent=`Возвраты — это заказы, которые покупатели не забрали или вернули: ${fmt(W.returning)} упаковок сейчас едут на склады WB. Каждая обратная доставка платная, но после приёмки товар снова продаётся.`;
+
+// ---- Месяц
+const cm=D.curMonth,pm=D.prevMonth;
+document.getElementById('mTitle').textContent=`${mName(cm)} против ${mName(pm).toLowerCase()}`;
+document.getElementById('mHint').textContent=`${mName(cm)} — с 1-го по ${ru(D.yesterday)} (${D.daysInCur} дн.), ${mName(pm).toLowerCase()} — целиком`;
+function mtab(cur,prev,cur_,prev_,cur_rows,money){
+  const row=(l,a,b,f,help)=>`<tr><td>${l}${help?` <span class="q" title="${help}">?</span>`:''}</td><td class="n big">${f(a)}${b!==null?`<span class="delta">${dlt(a,b)}</span>`:''}</td><td class="n">${f(b)}</td></tr>`;
+  let h=`<thead><tr><th></th><th class="n">${mName(cm)}</th><th class="n">${mName(pm)}</th></tr></thead><tbody>`;
+  for(const r of cur_rows)h+=row(...r);
+  return h+'</tbody>';
+}
+const om=O.month[cm],op=O.month[pm];
+document.getElementById('ozM').innerHTML=mtab(null,null,null,null,[
+ ['Заказано, шт',om.ordered,op.ordered,fmt,'Без отменённых'],
+ ['Заказано, ₸',om.rev,op.rev,tg,'По цене продажи'],
+ ['В день, шт',om.ordered/Math.max(D.daysInCur,1),op.ordered/31,v=>v.toFixed(1).replace('.',','),'Средний темп'],
+ ['Выкуплено, шт',om.delivered,op.delivered,fmt,'Доставлено в этом месяце (в том числе заказы прошлого)'],
+ ['Начислено, ₸',om.accrued,op.accrued,tg,'За доставленные'],
+ ['Комиссия + логистика',om.commission+om.logistics,op.commission+op.logistics,v=>'−'+tg(-v),''],
+ ['Прочие сборы и штрафы',om.fees,op.fees,v=>'−'+tg(-v),'Кросс-докинг, штрафы за отгрузку, обработка излишков'],
+ ['К выплате, ₸',om.payout+om.fees,op.payout+op.fees,tg,'Начислено минус всё удержанное'],
+ ['Отменено, шт',om.canc,op.canc,v=>fmt(v),''],
+ ['Доля отмен',pct(om.canc,om.ordered+om.canc),pct(op.canc,op.ordered+op.canc),v=>v.toFixed(1).replace('.',',')+' %',''],
+ ['FBO / FBS, шт',`${om.fbo} / ${om.fbs}`,`${op.fbo} / ${op.fbs}`,v=>v,''],
+]);
+const wm=W.month[cm],wp=W.month[pm];
+document.getElementById('wbM').innerHTML=mtab(null,null,null,null,[
+ ['Заказано, шт',wm.ordered,wp.ordered,fmt,'Без отменённых'],
+ ['Заказано, ₽',wm.rev,wp.rev,rb,'По цене со скидкой продавца'],
+ ['В день, шт',wm.ordered/Math.max(D.daysInCur,1),wp.ordered/31,v=>v.toFixed(1).replace('.',','),''],
+ ['Выкуплено, шт',wm.delivered,wp.delivered,fmt,'Покупатели забрали в этом месяце — включая заказы прошлых месяцев'],
+ ['К выплате, ₽',wm.payout,wp.payout,rb,'forPay — после комиссии WB'],
+ ['Отменено, шт',wm.canc,wp.canc,fmt,''],
+ ['Доля отмен',pct(wm.canc,wm.ordered+wm.canc),pct(wp.canc,wp.ordered+wp.canc),v=>v.toFixed(1).replace('.',',')+' %',''],
+]);
+document.getElementById('wbMNote').textContent=`Выкупов в августе (${fmt(wp.delivered)}) больше, чем заказов (${fmt(wp.ordered)}), потому что забирали заказы конца июля — тогда было ~1 300 заказов за два дня.`;
+
+// ---- Charts: ordered bars + delivered inner bar
+const tt=document.getElementById('tt');const showTT=(e,h)=>{tt.innerHTML=h;tt.style.opacity=1;moveTT(e)};const moveTT=e=>{let x=e.clientX+12,y=e.clientY-tt.offsetHeight-10;if(x+tt.offsetWidth>innerWidth-8)x=e.clientX-tt.offsetWidth-12;if(y<8)y=e.clientY+12;tt.style.left=x+'px';tt.style.top=y+'px'};const hideTT=()=>tt.style.opacity=0;
+function chart(el,ord,del,color,unit){
+  const W_=520,H=150,pl=30,pb=20,pt=8;const max=Math.max(1,...ord.map(r=>r[1]),...del.map(r=>r[1]));const ymax=Math.ceil(max/10)*10||10;
+  const n=ord.length,slot=(W_-pl)/n,bw=slot-3;const x=i=>pl+i*slot;const y=v=>pt+(H-pt-pb)*(1-v/ymax);
+  let s=`<svg viewBox="0 0 ${W_} ${H}" role="img">`;
+  [0,ymax/2,ymax].forEach(v=>{s+=`<line class="gl" x1="${pl}" x2="${W_}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${pl-5}" y="${y(v)+4}" text-anchor="end">${v}</text>`});
+  ord.forEach((r,i)=>{const d=del[i]||[r[0],0,0];
+    s+=`<rect x="${x(i)+1}" y="${y(r[1])}" width="${bw}" height="${Math.max(0,y(0)-y(r[1]))}" rx="2" fill="${color}" opacity="${i===n-1?1:.72}"/>`;
+    if(d[1])s+=`<rect x="${x(i)+1+bw*0.3}" y="${y(d[1])}" width="${bw*0.4}" height="${Math.max(0,y(0)-y(d[1]))}" rx="1.5" fill="var(--ink)" opacity=".85"/>`;
+    s+=`<rect x="${x(i)}" y="${pt}" width="${slot}" height="${H-pt-pb}" fill="transparent" data-tip="<b>${ruS(r[0])}</b><br>Заказано: ${r[1]} шт · ${fmt(r[2])} ${unit}<br>Выкуплено: ${d[1]} шт${d[2]?` · к выплате ${fmt(d[2])} ${unit}`:''}${r[3]?`<br>Отмен: ${r[3]}`:''}"/>`;
+    const dd=new Date(r[0]+'T00:00:00');if(dd.getDay()===1)s+=`<text class="ax" x="${x(i)+bw/2}" y="${H-5}" text-anchor="middle">${ruS(r[0])}</text>`});
+  s+='</svg>';el.innerHTML=s;
+  el.querySelectorAll('[data-tip]').forEach(r=>{r.addEventListener('mouseenter',e=>showTT(e,r.dataset.tip));r.addEventListener('mousemove',moveTT);r.addEventListener('mouseleave',hideTT);r.addEventListener('touchstart',e=>showTT(e.touches[0],r.dataset.tip),{passive:true})});
+}
+chart(document.getElementById('ozChart'),O.daily,O.deliv,'var(--oz)','₸');
+chart(document.getElementById('wbChart'),W.daily,W.buy,'var(--wb)','₽');
+
+// ---- География
+function bars(items,max,color,fmtN){return `<div class="bars">${items.map(([l,v])=>`<span class="lbl" title="${l}">${l}</span><div class="trk"><i style="width:${pct(v,max)}%;background:${color}"></i></div><span class="n">${fmtN?fmtN(v):v}</span>`).join('')}</div>`}
+const G=O.geo;const gTot=G.kz+G.ru+G.unknown;
+document.getElementById('ozGeo').innerHTML=`
+<div class="split"><i style="width:${pct(G.ru,gTot)}%;background:var(--oz)"></i><i style="width:${pct(G.kz,gTot)}%;background:var(--oz-deep)"></i><i style="width:${pct(G.unknown,gTot)}%;background:var(--neutral-bar)"></i></div>
+<div class="split-l"><span>Россия ${pctS(G.ru,gTot)}</span><span>Казахстан ${pctS(G.kz,gTot)}</span><span>город не указан ${pctS(G.unknown,gTot)}</span></div>
+<div class="eyebrow" style="margin:14px 0 8px">Топ городов</div>${bars(G.cities.slice(0,12).map(([c,v])=>[c,v.q]),G.cities[0][1].q,'var(--oz)')}
+<p class="note">Отгрузка идёт со складов Ozon: Астана ${fmt(G.whs['АСТАНА_РФЦ']||0)} шт, Алматы ${fmt(G.whs['АЛМАТЫ_2_РФЦ']||0)} шт. ${pctS(G.dtype.PVZ||0,(G.dtype.PVZ||0)+(G.dtype.Courier||0))} покупателей забирают в пунктах выдачи.</p>`;
+const WG=W.geo;const cTot=WG.countries.reduce((s,c)=>s+c[1],0);
+document.getElementById('wbGeo').innerHTML=`
+<div class="split">${WG.countries.slice(0,3).map((c,i)=>`<i style="width:${pct(c[1],cTot)}%;background:${['var(--wb)','var(--wb-deep)','var(--neutral-bar)'][i]}"></i>`).join('')}</div>
+<div class="split-l">${WG.countries.slice(0,3).map(c=>`<span>${c[0]} ${pctS(c[1],cTot)}</span>`).join('')}</div>
+<div class="eyebrow" style="margin:14px 0 8px">Топ регионов</div>${bars(WG.regions.slice(0,12),WG.regions[0][1],'var(--wb)')}
+<p class="note">Заказы с ${ru('2026-08-01')}: всего ${fmt(cTot)}. Склады отгрузки — Котовск и склад WB РФ; казахстанские склады WB сейчас пустые, поэтому заказы из Казахстана едут из России.</p>`;
+
+// ---- Отмены
+const oc=O.cancels;const ocTot=Object.values(oc).reduce((a,b)=>a+b,0);const ocOrdered=om.ordered+op.ordered+om.canc+op.canc;
+document.getElementById('ozCanc').innerHTML=`<div class="tiles" style="grid-template-columns:repeat(2,1fr)">${tile('Доля отмен',pctS(ocTot,ocOrdered),'',`${ocTot} из ${fmt(ocOrdered)} заказов с 6 августа`,'Отменённые и отказы при вручении',true)}${tile('В сентябре',om.canc,'шт',`из ${om.ordered+om.canc} заказов · ${pctS(om.canc,om.ordered+om.canc)}`,'')}</div>
+<div class="eyebrow" style="margin:14px 0 8px">Причины</div>${bars(Object.entries(oc).sort((a,b)=>b[1]-a[1]),Math.max(...Object.values(oc)),'var(--neutral-bar)')}
+<p class="note">Ozon возвращает деньги покупателю, а обратная логистика отказа ложится на продавца (≈ 299 ₸ за упаковку).</p>`;
+const wcTot=wm.canc+wp.canc,wcOrd=wm.ordered+wp.ordered+wcTot;
+document.getElementById('wbCanc').innerHTML=`<div class="tiles" style="grid-template-columns:repeat(2,1fr)">${tile('Доля отмен',pctS(wcTot,wcOrd),'',`${wcTot} из ${fmt(wcOrd)} заказов с 1 августа`,'Отмены до выкупа',true)}${tile('Невыкупы в пути назад',fmt(W.returning),'шт','едут обратно на склады WB','Покупатель не забрал или вернул на пункте выдачи')}</div>
+<p class="note">У WB две потери: отмена до получения (${pctS(wcTot,wcOrd)}) и невыкуп на пункте выдачи. Второе видно по объёму возвратов: ${fmt(W.returning)} упаковок против ${fmt(wp.delivered+wm.delivered)} выкупов за два месяца — ориентировочно каждая третья-четвёртая посылка возвращается.</p>`;
+
+// ---- Требует внимания (аналитика дня — переписывается агентом)
+const P=W.prices;const st=D.stock;const wbFree=st.wb.reduce((s,r)=>s+r.free,0);
+const items=[
+ {c:'crit',h:'Wildberries: продажи остановлены ценой',w:'WB',p:`В четырёх карточках стоит <b>18 000 ₽ −65 % = 6 300 ₽</b> (Микс 7 000 ₽) вместо обычных ~500–600 ₽. С 26 августа заказы упали с 50–100 в день до 0–1 при остатке ${fmt(wbFree)} упаковок на складах. В сентябре — ${wm.ordered} заказа за ${D.daysInCur} дней.`,a:'Если пауза намеренная — ок. Если нет — вернуть цены в «Цены и скидки» до 12 сентября, когда стартуют «Осенние скидки».'},
+ {c:'warn',h:`Ozon: дневные закончатся через ≈ ${st.oz[0].days} дня`,w:'Ozon',p:`Дневные — половина всех заказов Ozon, темп ${st.oz[0].rate} шт/день. Свободно ${fmt(st.oz[0].free)} + ${st.oz[0].promised} в поставке. Ночных хватит на ${st.oz[1].days} дней, ежедневных на ${st.oz[2].days}.`,a:'Заявка на поставку дневных на Астану и Алматы — не меньше 1 000 шт; в ту же поставку ночные и ежедневные на Астану по 150–200 шт (там их 0).'},
+ {c:'warn',h:`Wildberries: ${fmt(W.returning)} упаковок возвращаются на склады`,w:'WB',p:`Невыкупы: Микс ${st.wb[3].returning}, ежедневные ${st.wb[2].returning}, дневные ${st.wb[0].returning}, ночные ${st.wb[1].returning}. Это ≈ 2 месяца продаж при прежнем темпе, но каждая обратная доставка платная.`,a:'Следить за приёмкой возвратов; когда примут — сток на Котовске восстановится без новой поставки.'},
+ {c:'warn',h:`Wildberries: ${fmt(W.feedback.unansweredTotal)} отзывов без ответа`,w:'WB',p:`Средняя оценка за 30 дней ${W.feedback.sinceAug7.avg.toFixed(2).replace('.',',')} ★, низких (≤3) — ${W.feedback.lowRecent.length}. Повторяются: ${W.feedback.themes.slice(0,3).map(t=>`<b>${t[0].toLowerCase()}</b>`).join(', ')}.`,a:'Ответить хотя бы на низкие оценки за месяц (список ниже); проверить недовложение в наборах Микс.'},
+ {c:'info',h:`Ozon: сборы за приёмку поставок −${tg(-om.fees)} в сентябре`,w:'Ozon',p:`${Object.entries(om.feesDetail).map(([k,v])=>`${k.toLowerCase()} ${tg(v.amt)}`).join('; ')}.`,a:'В следующей поставке сверить состав заявки с фактом и указать сроки годности в карточках.'},
+ {c:'info',h:'Ozon: «Максимальный бустинг» стартует 9 сентября',w:'Ozon',p:`Акция 9 сен – 6 окт, подходят 6 товаров, участия нет. При росте ${dlt(O.w.ordered,O.pw.ordered)} в неделю без акции — не обязательна.`,a:'Решить до 9 сентября: заходить только если готов отдать 5–10 % цены за позиции в выдаче.'},
+ {c:'good',h:`Ozon растёт: ${O.w.ordered} упаковок за неделю, ${dlt(O.w.ordered,O.pw.ordered)}`,w:'Ozon',p:`Все заказы идут со складов Ozon (FBO), штрафов за отгрузку в сентябре нет, отмен ${om.canc} из ${om.ordered+om.canc}.`,a:''},
+];
+document.getElementById('att').innerHTML=items.map((i,k)=>`<div class="a ${i.c}"><span class="n">${k+1}</span><div><h3>${i.h}<span>${i.w}</span></h3><p>${i.p}</p>${i.a?`<div class="act">${i.a}</div>`:''}</div></div>`).join('');
+
+// ---- Остатки
+const pill=days=>{if(days===null)return '<span class="pill mute">нет темпа</span>';if(days<14)return `<span class="pill crit">● ${days} дн. — срочно</span>`;if(days<45)return `<span class="pill warn">▲ ${days} дн.</span>`;if(days>150)return `<span class="pill warn">■ ${days} дн. — избыток</span>`;return `<span class="pill ok">✓ ${days} дн.</span>`};
+let t=`<thead><tr><th>Площадка · товар</th><th class="n">Свободно</th><th class="n">Едет на склад</th><th class="n">Темп, шт/день</th><th>Хватит на</th></tr></thead><tbody>`;
+for(const r of st.oz)t+=`<tr><td><span class="tag oz">Ozon</span> <b>${r.name}</b><div class="whs">${r.wh.map(w=>`${w.wh}: ${fmt(w.free)}${w.promised?` (+${w.promised} едет)`:''}`).join(' · ')}</div></td><td class="n big">${fmt(r.free)}</td><td class="n">${r.promised||'—'}</td><td class="n">${r.rate}</td><td>${pill(r.days)}</td></tr>`;
+for(const r of st.wb)t+=`<tr><td><span class="tag wb">WB</span> <b>${r.name}</b><div class="whs">${r.wh.slice(0,3).map(w=>`${w.wh}: ${w.free}`).join(' · ')}${r.wh.length>3?' · …':''}</div></td><td class="n big">${fmt(r.free)}</td><td class="n">${fmt(r.returning)} <span style="color:var(--muted);font-size:12px">возвр.</span></td><td class="n">${r.rate14} <span style="color:var(--muted);font-size:12px">до паузы</span></td><td>${pill(r.days)}</td></tr>`;
+document.getElementById('stockTbl').innerHTML=t+'</tbody>';
+const ozTot=st.oz.reduce((s,r)=>s+r.free+r.promised,0);
+document.getElementById('stockNote').innerHTML=`На Ozon всего <b>${fmt(ozTot)}</b> упаковок (≈ ${tg(ozTot*3600)} по цене продажи), на Wildberries <b>${fmt(wbFree)}</b> свободно и ${fmt(W.returning)} возвращается. Темп Ozon — среднее за 7 дней; для WB — темп до остановки продаж ценой.`;
+
+// ---- Отзывы
+const fb=W.feedback;const d=fb.sinceAug7.dist;const mx=Math.max(...Object.values(d));
+document.getElementById('fb').innerHTML=`<div class="tiles" style="grid-template-columns:repeat(3,1fr)">${tile('Средняя',fb.sinceAug7.avg.toFixed(2).replace('.',','),'★',`${fb.sinceAug7.n} отзывов`,'',true)}${tile('Без ответа',fmt(fb.unansweredTotal),'',`+${fb.unansweredToday} сегодня`,'')}${tile('Вопросов',fb.questionsUnanswered,'','без ответа','')}</div>
+<div class="bars" style="margin-top:12px">${[5,4,3,2,1].map(k=>`<span class="lbl">${k} ★</span><div class="trk"><i style="width:${pct(d[k]||0,mx)}%;background:var(--wb)"></i></div><span class="n">${d[k]||0}</span>`).join('')}</div>
+<div class="themes">${fb.themes.map(t=>`<span><b>${t[1]}</b> ${t[0]}</span>`).join('')}</div>
+<div class="eyebrow" style="margin-top:14px">Последние низкие оценки</div>
+${fb.lowRecent.slice(0,5).map(r=>`<div class="rev low"><div class="m">${ruS(r.d)} · ${D.names[r.art]||r.art} · ${'★'.repeat(r.v)}${'☆'.repeat(5-r.v)}</div>${r.text}</div>`).join('')}
+<p class="note">Отзывы Ozon через API недоступны без Premium Plus — смотреть в кабинете.</p>`;
+
+// ---- Акции
+const today=D.today;
+const rowP=(tag,name,from,to,extra)=>{const live=from<=today&&to>=today;const soon=from>today;return `<div class="promo"><span class="tag ${tag}">${tag==='oz'?'Ozon':'WB'}</span><div><b>${name}</b>${extra?`<div style="font-size:12.5px;color:var(--ink-2)">${extra}</div>`:''}</div><div class="when">${live?'<span class="pill ok">идёт</span> ':soon?'<span class="pill warn">скоро</span> ':''}${ruS(from)}–${ruS(to)}</div></div>`};
+let ph='';
+for(const a of O.actions.filter(a=>a.to>=today).sort((a,b)=>a.from.localeCompare(b.from)))ph+=rowP('oz',a.title,a.from,a.to,`${a.part?'участвуешь':'не участвуешь'} · подходят ${a.pot} товаров`);
+for(const p of W.promos.filter(p=>p.end>=today).sort((a,b)=>a.start.localeCompare(b.start)))ph+=rowP('wb',p.name,p.start,p.end,'автоакция WB — применяется сама, если не отключить');
+document.getElementById('promos').innerHTML=ph;
+
+document.getElementById('foot').innerHTML=`Источники: Ozon Seller API (заказы FBO/FBS, финансовые операции, остатки, акции) и Wildberries API (заказы, выкупы, остатки, отзывы, цены, календарь акций). Ozon в тенге, Wildberries в рублях — не суммируются. «Выкуплено» на Ozon — по дате начисления денег за доставку, на WB — по дате выкупа. Только прокладки Ecovelle.`;
+</script>
