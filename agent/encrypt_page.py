@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
-"""Оборачивает готовую HTML-страницу в зашифрованную обёртку с паролем.
-Использование: python3 encrypt_page.py <in.html> <out.html> [пароль]
-Пароль: аргумент, иначе переменная PAGE_PASS, иначе строка PAGE_PASS= из .env / config/env.txt.
-Страница сжимается gzip, затем AES-256-GCM; ключ из пароля через PBKDF2-HMAC-SHA256 (600 000 итераций). Расшифровка — в браузере (WebCrypto).
-Включён вотчдог свежести для iOS-веб-клипа («На экран Домой»): при возврате из bfcache
-или после >10 минут в фоне страница перезагружается с cache-busting-параметром.
-"""
+"""Оборачивает готовую HTML-страницу в зашифрованную обёртку с паролем."""
 import os, sys, json, base64, secrets, gzip
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
@@ -60,6 +54,22 @@ body{{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-ap
 </form></div>
 <script id="enc" type="application/json">{blob}</script>
 <script>
+// Домашний экран/PWA на iOS часто «замораживает» страницу и показывает старую версию вместо новой сети.
+// Если страницу восстановили из bfcache, или вкладку открыли спустя >10 минут простоя — форсируем свежую загрузку с обходом кеша.
+(function(){{
+  try{{
+    var K='utro_seen', now=Date.now();
+    function bust(){{location.replace(location.pathname+'?_r='+Date.now());}}
+    window.addEventListener('pageshow',function(e){{if(e.persisted)bust();}});
+    document.addEventListener('visibilitychange',function(){{
+      if(document.visibilityState==='visible'){{
+        var last=+(sessionStorage.getItem(K)||0);
+        if(last&&now-last>10*60*1000)bust();
+      }}
+    }});
+    sessionStorage.setItem(K,String(now));
+  }}catch(_){{}}
+}})();
 const E=JSON.parse(document.getElementById('enc').textContent);
 const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 async function unlock(pw){{
@@ -71,26 +81,16 @@ async function unlock(pw){{
   const ds=new Blob([pt]).stream().pipeThrough(new DecompressionStream('gzip'));
   return await new Response(ds).text();
 }}
-// вотчдог свежести: iOS-веб-клип («На экран Домой») замораживает страницу и при
-// повторном открытии показывает старый снимок. Перезагружаем с cache-busting.
-function bust(){{location.replace(location.pathname+'?r='+Date.now())}}
-function arm(){{
-  const t=Date.now();
-  addEventListener('pageshow',e=>{{if(e.persisted)bust()}});
-  document.addEventListener('visibilitychange',()=>{{if(!document.hidden&&Date.now()-t>6e5)bust()}});
-}}
 function render(html){{
   // самый надёжный способ во всех браузерах (включая Safari): полностью переписать документ расшифрованной страницей
   const full='<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"></head><body>'+html+'</body></html>';
   document.open();document.write(full);document.close();
-  arm(); // document.open() снёс старые слушатели — вешаем заново на новый документ
   if(location.search.includes('debug')){{setTimeout(()=>{{const d=document.createElement('pre');d.style.cssText='position:fixed;bottom:0;left:0;right:0;background:#000;color:#0f0;font:11px monospace;padding:6px;z-index:99999;white-space:pre-wrap';d.textContent='UA: '+navigator.userAgent+' | styleSheets: '+document.styleSheets.length+' rules: '+[...document.styleSheets].map(s=>{{try{{return s.cssRules.length}}catch(e){{return 'err'}}}}).join(',')+' | card radius: '+(document.querySelector('.card')?getComputedStyle(document.querySelector('.card')).borderRadius:'no .card');document.body.appendChild(d)}},1500)}}
 }}
 const f=document.getElementById('f'),err=document.getElementById('err'),btn=document.getElementById('btn'),inp=document.getElementById('pw');
 f.addEventListener('submit',async e=>{{e.preventDefault();err.textContent='';btn.disabled=true;btn.textContent='Открываю…';
   try{{const html=await unlock(inp.value);try{{if(document.getElementById('rem').checked)localStorage.setItem('utro_pw',inp.value)}}catch(_){{}}render(html)}}
   catch(e){{err.textContent=e&&e.message==='old-browser'?'Браузер устарел — откройте в Safari/Chrome последней версии':'Неверный пароль';btn.disabled=false;btn.textContent='Открыть';inp.select()}}}});
-arm();
 (async()=>{{let saved=null;try{{saved=localStorage.getItem('utro_pw')}}catch(_){{}}if(saved){{try{{render(await unlock(saved))}}catch(_){{try{{localStorage.removeItem('utro_pw')}}catch(__){{}}}}}}}})();
 </script>
 '''

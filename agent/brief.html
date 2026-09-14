@@ -209,14 +209,14 @@ document.getElementById('stamp').textContent=new Date(D.generated).toLocaleStrin
 document.getElementById('h1').textContent='Утро '+ru(D.today);
 document.getElementById('ydate').textContent=wd(D.yesterday)+', '+ru(D.yesterday);
 const O=D.oz,W=D.wb;
-document.getElementById('lead').innerHTML=`Вчера на Ozon заказали <b>${O.y.ordered} упаковок</b> на ${tg(O.y.rev)} (${dlt(O.y.ordered,O.y2.ordered,'к позавчера')}), доставили <b>${O.y.delivered}</b> — к выплате ${tg(O.y.payout)}. На Wildberries заказов <b>${W.y.ordered}</b>, выкупов ${W.y.buy}. Неделя на Ozon ${dlt(O.w.ordered,O.pw.ordered,'к прошлой')}.`;
+document.getElementById('lead').innerHTML=`Вчера на Ozon заказали <b>${O.y.ordered} упаковок</b> на ${tg(O.y.rev)} (${dlt(O.y.ordered,O.y2.ordered,'к позавчера')}); в сентябре доставлено ${O.month[D.curMonth].delivered} из ${fmt(O.month[D.curMonth].ordered)}, остальное в пути. На Wildberries заказов <b>${W.y.ordered}</b>, выкупов ${W.y.buy} на ${rb(W.y.payout)}. Неделя на Ozon ${dlt(O.w.ordered,O.pw.ordered,'к прошлой')}, на WB ${W.w.ordered} заказов против ${W.pw.ordered} — площадка стоит из-за цены.`;
 
 const tile=(l,v,unit,d,help,big)=>`<div class="tile ${big?'big':''}"><div class="l">${l}${help?`<span class="q" title="${help}">?</span>`:''}</div><div class="v">${v}${unit?`<small>${unit}</small>`:''}</div><div class="d">${d}</div></div>`;
 // ---- Вчера
 document.getElementById('ozY').innerHTML=
  tile('Заказано',O.y.ordered,'шт',`${tg(O.y.rev)} · ${dlt(O.y.ordered,O.y2.ordered,'к позавчера')}`,'Оформлено заказов за день, без отменённых')+
- tile('Выкуплено',O.y.delivered,'шт',`начислено ${tg(O.y.accrued)}`,'Доставлено покупателям за день — Ozon начислил деньги')+
- tile('К выплате',fmt(O.y.payout),'₸',`после комиссии и логистики`,'Сумма, которая придёт за вчерашние доставки')+
+ tile('Выкуплено','—','',`Ozon отключил метод выплат — за день не считается`,'С 13.09 метод /v3/finance/transaction/list отключён; за месяц выкупы считаются по статусу постингов')+
+ tile('Доставлено за месяц',O.month[D.curMonth].delivered,'шт',`из ${fmt(O.month[D.curMonth].ordered)} заказанных`,'По статусу постингов delivered')+
  tile('За неделю',O.w.ordered,'шт',`${tg(O.w.rev)} · ${dlt(O.w.ordered,O.pw.ordered,'к прошлой')}`,'7 дней до вчера включительно против предыдущих 7');
 document.getElementById('wbY').innerHTML=
  tile('Заказано',W.y.ordered,'шт',W.y.ordered?`${rb(W.y.rev)}`:'заказов не было','Оформлено заказов за день, без отменённых')+
@@ -320,15 +320,7 @@ document.getElementById('wbCanc').innerHTML=`<div class="tiles" style="grid-temp
 
 // ---- Требует внимания (аналитика дня — переписывается агентом)
 const P=W.prices;const st=D.stock;const wbFree=st.wb.reduce((s,r)=>s+r.free,0);
-const items=[
- {c:'crit',h:'Wildberries: продажи остановлены ценой',w:'WB',p:`В четырёх карточках стоит <b>18 000 ₽ −65 % = 6 300 ₽</b> (Микс 7 000 ₽) вместо обычных ~500–600 ₽. С 26 августа заказы упали с 50–100 в день до 0–1 при остатке ${fmt(wbFree)} упаковок на складах. В сентябре — ${wm.ordered} заказа за ${D.daysInCur} дней.`,a:'Если пауза намеренная — ок. Если нет — вернуть цены в «Цены и скидки» до 12 сентября, когда стартуют «Осенние скидки».'},
- {c:'warn',h:`Ozon: дневные закончатся через ≈ ${st.oz[0].days} дня`,w:'Ozon',p:`Дневные — половина всех заказов Ozon, темп ${st.oz[0].rate} шт/день. Свободно ${fmt(st.oz[0].free)} + ${st.oz[0].promised} в поставке. Ночных хватит на ${st.oz[1].days} дней, ежедневных на ${st.oz[2].days}.`,a:'Заявка на поставку дневных на Астану и Алматы — не меньше 1 000 шт; в ту же поставку ночные и ежедневные на Астану по 150–200 шт (там их 0).'},
- {c:'warn',h:`Wildberries: ${fmt(W.returning)} упаковок возвращаются на склады`,w:'WB',p:`Невыкупы: Микс ${st.wb[3].returning}, ежедневные ${st.wb[2].returning}, дневные ${st.wb[0].returning}, ночные ${st.wb[1].returning}. Это ≈ 2 месяца продаж при прежнем темпе, но каждая обратная доставка платная.`,a:'Следить за приёмкой возвратов; когда примут — сток на Котовске восстановится без новой поставки.'},
- {c:'warn',h:`Wildberries: ${fmt(W.feedback.unansweredTotal)} отзывов без ответа`,w:'WB',p:`Средняя оценка за 30 дней ${W.feedback.sinceAug7.avg.toFixed(2).replace('.',',')} ★, низких (≤3) — ${W.feedback.lowRecent.length}. Повторяются: ${W.feedback.themes.slice(0,3).map(t=>`<b>${t[0].toLowerCase()}</b>`).join(', ')}.`,a:'Ответить хотя бы на низкие оценки за месяц (список ниже); проверить недовложение в наборах Микс.'},
- {c:'info',h:`Ozon: сборы за приёмку поставок −${tg(-om.fees)} в сентябре`,w:'Ozon',p:`${Object.entries(om.feesDetail).map(([k,v])=>`${k.toLowerCase()} ${tg(v.amt)}`).join('; ')}.`,a:'В следующей поставке сверить состав заявки с фактом и указать сроки годности в карточках.'},
- {c:'info',h:'Ozon: «Максимальный бустинг» стартует 9 сентября',w:'Ozon',p:`Акция 9 сен – 6 окт, подходят 6 товаров, участия нет. При росте ${dlt(O.w.ordered,O.pw.ordered)} в неделю без акции — не обязательна.`,a:'Решить до 9 сентября: заходить только если готов отдать 5–10 % цены за позиции в выдаче.'},
- {c:'good',h:`Ozon растёт: ${O.w.ordered} упаковок за неделю, ${dlt(O.w.ordered,O.pw.ordered)}`,w:'Ozon',p:`Все заказы идут со складов Ozon (FBO), штрафов за отгрузку в сентябре нет, отмен ${om.canc} из ${om.ordered+om.canc}.`,a:''},
-];
+const items=D.items||[];
 document.getElementById('att').innerHTML=items.map((i,k)=>`<div class="a ${i.c}"><span class="n">${k+1}</span><div><h3>${i.h}<span>${i.w}</span></h3><p>${i.p}</p>${i.a?`<div class="act">${i.a}</div>`:''}</div></div>`).join('');
 
 // ---- Остатки
@@ -357,5 +349,5 @@ for(const a of O.actions.filter(a=>a.to>=today).sort((a,b)=>a.from.localeCompare
 for(const p of W.promos.filter(p=>p.end>=today).sort((a,b)=>a.start.localeCompare(b.start)))ph+=rowP('wb',p.name,p.start,p.end,'автоакция WB — применяется сама, если не отключить');
 document.getElementById('promos').innerHTML=ph;
 
-document.getElementById('foot').innerHTML=`Источники: Ozon Seller API (заказы FBO/FBS, финансовые операции, остатки, акции) и Wildberries API (заказы, выкупы, остатки, отзывы, цены, календарь акций). Ozon в тенге, Wildberries в рублях — не суммируются. «Выкуплено» на Ozon — по дате начисления денег за доставку, на WB — по дате выкупа. Только прокладки Ecovelle.`;
+document.getElementById('foot').innerHTML=`Источники: Ozon Seller API (заказы FBO/FBS, остатки, акции) и Wildberries API (заказы, выкупы, остатки, отзывы, цены, календарь акций). Ozon в тенге, Wildberries в рублях — не суммируются. «Выкуплено» на Ozon сегодня — по статусу постингов: Ozon 13 сентября отключил метод финансовых транзакций v3, поэтому суммы начислений и выплат за сентябрь недоступны. На WB — по дате выкупа. Только прокладки Ecovelle.`;
 </script>

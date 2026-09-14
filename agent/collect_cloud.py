@@ -1,22 +1,5 @@
 #!/usr/bin/env python3
-"""Утро Ecovelle — сбор всех сырых данных Ozon + Wildberries НАПРЯМУЮ из облака.
-
-Заменяет собой встроенный браузер, сниппеты collectors.md и merge_raw.py:
-сеть до api-seller.ozon.ru и *.wildberries.ru открыта, поэтому каждый прогон
-пересобирает данные с нуля за период «1-е число прошлого месяца … сегодня».
-Никакого состояния между запусками не нужно — Mac не требуется.
-
-Пишет в свою папку: oz_raw.json, wb_raw.json, wb_stock.json,
-wb_feedback.json, wb_prices.json, wb_promos.json (форматы — как в докстринге
-build_brief.py) и печатает короткую сводку + список источников, которые упали.
-
-Ключи: OZON_CLIENT_ID, OZON_API_KEY, WB_TOKEN — из переменных окружения,
-иначе из config/env.txt рядом со скриптом.
-
-Запуск:  python3 collect_cloud.py [YYYY-MM-DD]
-         (дата = «сегодня»; по умолчанию текущая дата в Asia/Shanghai)
-Занимает ~2–4 минуты: между orders и sales у WB обязательная пауза 65 с.
-"""
+"""Утро Ecovelle — сбор всех сырых данных Ozon + Wildberries НАПРЯМУЮ из облака."""
 import json, os, sys, time, datetime as dt
 import urllib.request, urllib.error, urllib.parse
 from zoneinfo import ZoneInfo
@@ -123,8 +106,8 @@ def ozon():
         if len(a) < 1000:
             break
         off += 1000
-        time.sleep(0.7)
-    time.sleep(0.7)
+        time.sleep(1.2)
+    time.sleep(1.2)
     fbs, off = [], 0
     while True:
         r = (post('/v3/posting/fbs/list', {'dir': 'ASC', 'filter': {'since': since, 'to': to},
@@ -134,7 +117,7 @@ def ozon():
         if not r.get('has_next'):
             break
         off += 1000
-        time.sleep(0.7)
+        time.sleep(1.2)
     log(f'  Ozon постинги: FBO {len(fbo)}, FBS {len(fbs)}')
 
     rows = []
@@ -199,54 +182,34 @@ def ozon():
             whs[wh] = whs.get(wh, 0) + q
         dtype[dty or '?'] = dtype.get(dty or '?', 0) + q
 
-    # финансы: прошлый и текущий месяц, границы считаются по датам (UTC-safe)
-    ops = []
-    for f in (m0, m1):
-        end = (f.replace(day=28) + dt.timedelta(days=4)).replace(day=1) - dt.timedelta(days=1)
-        page = 1
-        while True:
-            time.sleep(0.7)
-            r = (post('/v3/finance/transaction/list',
-                      {'filter': {'date': {'from': f.isoformat() + 'T00:00:00.000Z',
-                                           'to': end.isoformat() + 'T23:59:59.999Z'},
-                                  'operation_type': [], 'posting_number': '', 'transaction_type': 'all'},
-                       'page': page, 'page_size': 1000}) or {}).get('result') or {}
-            ops += r.get('operations') or []
-            if page >= (r.get('page_count') or 1):
-                break
-            page += 1
-    log(f'  Ozon финансовые операции: {len(ops)}')
+    # ФИНАНСЫ. /v3/finance/transaction/list отключён Ozon 13 сен 2026 (code 9, obsolete method),
+    # замены с теми же полями в API нет (проверены v1/v2/v4 list, totals, realization, analytics delivered_units).
+    # Поэтому: выкупы — по статусу постингов, денежный ориентир — cash-flow-statement (по всему кабинету).
+    deliv, other = {}, {}
+    fin = {m: {'acc': 0, 'comm': 0, 'log': 0, 'amt': 0, 'n': M['deliveredStatus']} for m, M in month.items()}
+    cash = {}
+    try:
+        time.sleep(1.2)
+        cf = post('/v1/finance/cash-flow-statement/list',
+                  {'date': {'from': m0.isoformat() + 'T00:00:00.000Z',
+                            'to': today.isoformat() + 'T23:59:59.999Z'},
+                   'page': 1, 'page_size': 100, 'with_details': False}) or {}
+        for c in ((cf.get('result') or {}).get('cash_flows') or []):
+            m = (c.get('period') or {}).get('begin', '')[:7]
+            x = cash.setdefault(m, {'orders': 0, 'returns': 0, 'comm': 0, 'serv': 0, 'deliv': 0})
+            x['orders'] += c.get('orders_amount', 0)
+            x['returns'] += c.get('returns_amount', 0)
+            x['comm'] += c.get('commission_amount', 0)
+            x['serv'] += c.get('services_amount', 0)
+            x['deliv'] += c.get('item_delivery_and_return_amount', 0)
+        log(f'  Ozon cash-flow по месяцам: {list(cash)}')
+    except Exception as e:
+        log(f'  !! Ozon cash-flow не собран: {e}')
 
-    deliv, fin, other = {}, {}, {}
-    for o in ops:
-        d = (o.get('operation_date') or '')[:10]
-        m = d[:7]
-        if o.get('operation_type') == 'OperationAgentDeliveredToCustomer':
-            items = [i for i in (o.get('items') or []) if i.get('sku') in PADSKU]
-            if not items:
-                continue
-            x = deliv.setdefault(d, {'n': 0, 'acc': 0, 'amt': 0})
-            x['n'] += len(items)
-            x['acc'] += o.get('accruals_for_sale', 0)
-            x['amt'] += o.get('amount', 0)
-            F = fin.setdefault(m, {'acc': 0, 'comm': 0, 'log': 0, 'amt': 0, 'n': 0})
-            F['n'] += len(items)
-            F['acc'] += o.get('accruals_for_sale', 0)
-            F['comm'] += o.get('sale_commission', 0)
-            F['log'] += sum(s.get('price', 0) for s in (o.get('services') or []))
-            F['amt'] += o.get('amount', 0)
-        else:
-            k = (o.get('operation_type_name') or '?') \
-                .replace('Услуга за обработку операционных ошибок продавца: ', 'Штраф: ') \
-                .replace('Обработка операционных ошибок продавца: ', 'Штраф: ')[:60]
-            t = other.setdefault(m, {}).setdefault(k, {'n': 0, 'amt': 0})
-            t['n'] += 1
-            t['amt'] += o.get('amount', 0)
-
-    time.sleep(0.7)
+    time.sleep(1.2)
     stock = (post('/v2/analytics/stock_on_warehouses',
                   {'limit': 100, 'offset': 0, 'warehouse_type': 'ALL'}) or {}).get('result') or {}
-    time.sleep(0.7)
+    time.sleep(1.2)
     act = req('https://api-seller.ozon.ru/v1/actions', 'GET',
               {'Client-Id': OZ_ID, 'Api-Key': OZ_KEY}) or {}
 
@@ -257,6 +220,8 @@ def ozon():
         'fin': fin, 'other': other, 'month': month, 'transit': transit, 'cancels': cancels,
         'geo': sorted(geo.items(), key=lambda kv: -kv[1]['q'])[:40],
         'kzCities': KZ_CITIES, 'whs': whs, 'dtype': dtype, 'stat': stat,
+        'cash': cash,
+        'financeApiDown': 'Ozon отключил /v3/finance/transaction/list (code 9, obsolete method) — выплаты и выкупы по дням недоступны',
         'stock': [{'o': r['item_code'], 'wh': r['warehouse_name'], 'free': r['free_to_sell_amount'],
                    'promised': r['promised_amount'], 'reserved': r['reserved_amount']}
                   for r in (stock.get('rows') or []) if r.get('item_code') in PADS],
