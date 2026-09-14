@@ -1,0 +1,63 @@
+name: Утро Ecovelle
+
+on:
+  schedule:
+    - cron: '17 0 * * *'      # 00:17 UTC = 05:17 по Астане
+  workflow_dispatch:           # кнопка «Run workflow» для ручного запуска
+
+permissions:
+  contents: write
+
+concurrency:
+  group: utro
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: pip install --quiet cryptography
+
+      - name: Собрать данные Ozon и Wildberries
+        working-directory: agent
+        env:
+          OZON_CLIENT_ID: ${{ secrets.OZON_CLIENT_ID }}
+          OZON_API_KEY:   ${{ secrets.OZON_API_KEY }}
+          WB_TOKEN:       ${{ secrets.WB_TOKEN }}
+        run: python3 collect_cloud.py
+
+      - name: Собрать и зашифровать страницу
+        working-directory: agent
+        env:
+          PAGE_PASS: ${{ secrets.PAGE_PASS }}
+        run: |
+          python3 build_brief.py
+          python3 encrypt_page.py utro-ecovelle-plain.html enc.html
+          python3 - <<'PY'
+          head = ('<!doctype html><html lang="ru"><head><meta charset="utf-8">'
+                  '<meta name="viewport" content="width=device-width,initial-scale=1">'
+                  '<meta name="robots" content="noindex,nofollow"></head><body>')
+          body = open('enc.html', encoding='utf-8').read()
+          open('../index.html', 'w', encoding='utf-8').write(head + body + '</body></html>')
+          print('index.html собран,', len(body), 'байт зашифрованной части')
+          PY
+
+      - name: Опубликовать
+        run: |
+          git config user.name  utro-bot
+          git config user.email utro-bot@users.noreply.github.com
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "изменений нет — коммит не нужен"
+          else
+            git commit -m "brief $(TZ=Asia/Almaty date '+%Y-%m-%d %H:%M')"
+            git push
+            echo "опубликовано: https://ecovelle.github.io/utro/"
+          fi
