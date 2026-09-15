@@ -2,8 +2,8 @@ name: Утро Ecovelle
 
 on:
   schedule:
-    - cron: '17 0 * * *'      # 00:17 UTC = 05:17 по Астане
-  workflow_dispatch:           # кнопка «Run workflow» для ручного запуска
+    - cron: '7 21,22,23 * * *'   # 02:07 / 03:07 / 04:07 Астана — 05:07 / 06:07 / 07:07 Китай
+    - cron: '7 0,1 * * *'        # 05:07 / 06:07 Астана — 08:07 / 09:07 Китай
 
 permissions:
   contents: write
