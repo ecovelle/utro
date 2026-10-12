@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.venv/
+.env
+agent/config/
+agent/*_raw.json
+agent/wb_*.json
+agent/brief_data.json
+agent/utro-ecovelle-plain.html
+agent/enc.html
+agent/collection_status.json
+preview/
+node_modules/

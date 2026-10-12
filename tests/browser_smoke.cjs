@@ -1,0 +1,62 @@
+/* Development check: PLAYWRIGHT_PATH must point to an installed Playwright package. */
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const {pathToFileURL} = require('node:url');
+const {chromium} = require(process.env.PLAYWRIGHT_PATH || 'playwright');
+(async()=>{
+ const browser=await chromium.launch({executablePath:process.env.CHROME_PATH||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true});
+ const page=await browser.newPage({viewport:{width:1440,height:1100}});
+ const errors=[];page.on('pageerror',error=>errors.push(error.message));
+ await page.goto(pathToFileURL(path.resolve('preview/index.html')).href);
+ assert.equal(await page.locator('#summary article').count(),2);
+ assert.equal(await page.locator('#summary article h3').first().innerText(),'Wildberries');
+ assert.equal(await page.locator('#summary article h3').nth(1).innerText(),'Ozon');
+ assert.equal(await page.locator('#charts article h3').first().innerText(),'Wildberries');
+ assert.match(await page.locator('#range-label').innerText(),/05\.10\.2026 — 11\.10\.2026 · 7/);
+ await page.locator('[data-period="1m"]').click();
+ assert.match(await page.locator('#range-label').innerText(),/12\.09\.2026 — 11\.10\.2026 · 30/);
+ assert.equal(await page.locator('#notice').innerText(),'');
+ await page.screenshot({path:'preview/desktop.png',fullPage:true});
+ await page.locator('[data-period="3m"]').click();
+ assert.match(await page.locator('#notice').innerText(),/Wildberries: доступны 89 из 92/);
+ await page.locator('[data-period="6m"]').click();
+ assert.match(await page.locator('#range-label').innerText(),/12\.04\.2026/);
+ await page.locator('[data-period="12m"]').click();
+ assert.match(await page.locator('#range-label').innerText(),/12\.10\.2025/);
+ assert.equal(await page.locator('#charts svg rect').count()>0,true);
+ await page.locator('#year').selectOption('2025');
+ assert.match(await page.locator('#range-label').innerText(),/01\.01\.2025 — 31\.12\.2025 · 365/);
+ await page.locator('#from').fill('2026-10-01');await page.locator('#to').fill('2026-10-06');await page.locator('#apply').click();
+ assert.match(await page.locator('#range-label').innerText(),/6 дн/);
+ const downloadPromise=page.waitForEvent('download');await page.locator('#export').click();const download=await downloadPromise;
+ await download.saveAs('preview/test-export.csv');
+ const csv=fs.readFileSync('preview/test-export.csv','utf8');assert.equal(csv.split('\r\n').length,13);assert.match(csv,/"Ozon";"доступен";"KZT"/);
+ assert.equal(csv.includes('undefined'),false);
+ await page.locator('#theme').click();assert.equal(await page.locator('html').getAttribute('data-theme'),'dark');
+ await page.screenshot({path:'preview/dark.png',fullPage:true});
+ await page.locator('#theme').click();
+ await page.setViewportSize({width:390,height:844});await page.locator('[data-period="7d"]').click();
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true);
+ await page.screenshot({path:'preview/mobile.png',fullPage:true});
+ // Render a missing-source/error state and confirm no crash or fabricated numeric totals.
+ await page.evaluate(()=>{D.markets.oz.days={};D.markets.oz.coverage=[];D.markets.wb.days={};D.markets.wb.coverage=[];D.snapshots={};D.status.oz={ok:false,error:'HTTP 401'};D.status.wb={ok:false,error:'HTTP 429'};renderStock();renderHealth();render();});
+ assert.match(await page.locator('#notice').innerText(),/0 из 7/);
+ assert.equal(await page.locator('#summary .value').first().innerText(),'—');
+ await page.screenshot({path:'preview/missing-data.png',fullPage:true});
+ // Empty covered period is a real zero, not an error or undefined division.
+ await page.evaluate(()=>{for(const id of ['oz','wb'])D.markets[id].days={'2026-10-11':{orders:0,orderAmount:0,active:0,cancelledOrders:0,buyouts:id==='wb'?0:null,returns:id==='wb'?0:null,netPayout:id==='wb'?0:null,deliveredCohort:0,cancels:0,fbo:0,fbs:0,products:{},geo:{}}};setRange('2026-10-11','2026-10-11');});
+ assert.equal(await page.locator('#summary .value').first().innerText(),'0');
+ assert.deepEqual(errors,[]);
+ // The encrypted gate must actually execute the decrypted dashboard scripts.
+ const locked=await browser.newPage();locked.on('pageerror',error=>errors.push(error.message));
+ await locked.goto(pathToFileURL(path.resolve('preview/encrypted.html')).href);
+ await locked.locator('#pw').fill('wrong');await locked.locator('#btn').click();
+ await locked.waitForFunction(()=>document.getElementById('err').textContent==='Неверный пароль');
+ await locked.locator('#pw').fill('demo-only-password');await locked.locator('#btn').click();
+ await locked.locator('#summary article').first().waitFor();
+ assert.equal(await locked.locator('#summary article').count(),2);
+ assert.equal(await locked.locator('#range-label').innerText(),'05.10.2026 — 11.10.2026 · 7 дн.');
+ assert.deepEqual(errors,[]);
+ await browser.close();console.log('Browser checks passed: all periods, year, custom dates, CSV, themes, mobile, missing sources and zero sales.');
+})().catch(error=>{console.error(error);process.exit(1);});
