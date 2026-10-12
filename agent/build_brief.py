@@ -16,12 +16,15 @@ def build_data(state):
     if not run:
         raise ValueError('Нет завершённого сбора данных')
     today = dt.date.fromisoformat(run['today'])
-    data = {'generated': run['generated'], 'today': today.isoformat(), 'timezone': 'Europe/Moscow',
+    period_start = (today - dt.timedelta(days=90)).isoformat()
+    period_end = (today - dt.timedelta(days=1)).isoformat()
+    data = {'periodStart': period_start, 'generated': run['generated'], 'today': today.isoformat(), 'timezone': 'Europe/Moscow',
             'status': run['status'], 'names': NAMES, 'snapshots': state['snapshots'], 'markets': {},
             'stockRates': {'oz': {}, 'wb': {}}}
-    # Preserve all years; blank uncovered dates are never filled with numeric zeroes.
+    # Publish only the last 90 full days; retain encrypted source history for recovery.
     for market in ('oz', 'wb'):
-        intervals = state['coverage'][market]
+        intervals = [[max(a, period_start), min(b, period_end)] for a, b in state['coverage'][market]
+                     if b >= period_start and a <= period_end]
         rows = aggregate(state, market)
         starts = [a for a, _ in intervals]
         start = min(starts) if starts else today.isoformat()
@@ -39,7 +42,7 @@ def build_data(state):
                 defaults.update(rows.get(day, {}))
                 days[day] = defaults
             cursor += dt.timedelta(days=1)
-        codes = {item.get('currency') for record in state['oz'].values() for item in record['items'] if item.get('currency')} if market == 'oz' else {'RUB'}
+        codes = {item.get('currency') for record in state['oz'].values() if period_start <= record['date'] <= period_end for item in record['items'] if item.get('currency')} if market == 'oz' else {'RUB'}
         currency = next(iter(codes)) if len(codes) == 1 else (os.environ.get('OZON_CURRENCY', 'KZT') if not codes else None)
         if currency is None:
             for row in days.values():
@@ -51,7 +54,7 @@ def build_data(state):
                                    'buyoutsAvailable': market == 'wb'}
         if market == 'oz':
             finance = state.get('oz_finance', {}).get('days', {})
-            finance = {day: row for day, row in finance.items() if day < today.isoformat()}
+            finance = {day: row for day, row in finance.items() if period_start <= day <= period_end}
             for row in finance.values():
                 for kind in ('buyouts', 'returns'):
                     if row[kind] is not None and (row[kind] < 0 or sum(p[kind] for p in row['products'].values()) != row[kind]):
