@@ -19,7 +19,7 @@ const {chromium} = require(process.env.PLAYWRIGHT_PATH || 'playwright');
  assert.equal(await page.locator('#notice').innerText(),'');
  await page.screenshot({path:'preview/desktop.png',fullPage:true});
  await page.locator('[data-period="3m"]').click();
- assert.match(await page.locator('#notice').innerText(),/Wildberries: доступны 89 из 92/);
+ assert.match(await page.locator('#notice').innerText(),/Wildberries: заказы доступны за 89 из 92/);
  await page.locator('[data-period="6m"]').click();
  assert.match(await page.locator('#range-label').innerText(),/12\.04\.2026/);
  await page.locator('[data-period="12m"]').click();
@@ -47,6 +47,15 @@ const {chromium} = require(process.env.PLAYWRIGHT_PATH || 'playwright');
  // Empty covered period is a real zero, not an error or undefined division.
  await page.evaluate(()=>{for(const id of ['oz','wb'])D.markets[id].days={'2026-10-11':{orders:0,orderAmount:0,active:0,cancelledOrders:0,buyouts:id==='wb'?0:null,returns:id==='wb'?0:null,netPayout:id==='wb'?0:null,deliveredCohort:0,cancels:0,fbo:0,fbs:0,products:{},geo:{}}};setRange('2026-10-11','2026-10-11');});
  assert.equal(await page.locator('#summary .value').first().innerText(),'0');
+ // Financial data remains usable when order history is missing, with independent coverage.
+ await page.evaluate(()=>{D.markets.oz.days={};D.markets.oz.financeDays={'2026-10-11':{netPayout:12345,buyouts:3,returns:1,products:{ecovelle_245:{buyouts:3,returns:1}}}};D.markets.oz.financeCurrency='KZT';setRange('2026-10-11','2026-10-11');});
+ assert.match(await page.locator('#summary article').nth(1).innerText(),/123,45 KZT/);
+ assert.match(await page.locator('#summary article').nth(1).innerText(),/подтверждены 1 из 1 дней/);
+ await page.evaluate(()=>{setRange('2026-10-10','2026-10-11');});
+ assert.match(await page.locator('#notice').innerText(),/Начисления Ozon: 1 из 2 дней/);
+ await page.evaluate(()=>{D.markets.oz.financeDays['2026-10-11'].buyouts=null;D.markets.oz.financeDays['2026-10-11'].returns=null;D.markets.oz.financeDays['2026-10-11'].products={};setRange('2026-10-11','2026-10-11');});
+ assert.match(await page.locator('#summary article').nth(1).innerText(),/123,45 KZT/);
+ assert.match(await page.locator('#summary article').nth(1).innerText(),/подтверждены 0 из 1 дней/);
  assert.deepEqual(errors,[]);
  // The encrypted gate must actually execute the decrypted dashboard scripts.
  const locked=await browser.newPage();locked.on('pageerror',error=>errors.push(error.message));
