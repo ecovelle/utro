@@ -3,6 +3,7 @@
 import datetime as dt
 import json
 import sys
+from decimal import Decimal
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -36,6 +37,31 @@ def main():
     for shape in shapes.values():
         shape['fields'] = sorted(shape['fields'])
     print('POSTINGS_SCHEMAS_BY_PUBLIC_TYPE=' + json.dumps(shapes, ensure_ascii=False), flush=True)
+    sale_types = {int(i) for i, value in types.items() if value['name'] == 'SaleCommission'}
+    relations = set()
+    for operation in operations:
+        for product in (operation.get('posting') or {}).get('products', []):
+            commission = product.get('commission') or {}
+            gross = commission.get('sale_amount') or {}
+            if gross.get('amount') is None:
+                continue
+            candidates = [r for r in postings.get(operation.get('unit_number'), [])
+                          if r.get('sku') == product.get('sku') and r.get('accrual_date') == day and r.get('type_id') in sale_types]
+            matches = {}
+            for field in ('commission', 'sale_commission', 'sale_amount'):
+                value = commission.get(field) or {}
+                matches[field] = any(value.get('amount') is not None and r.get('accrued', {}).get('amount') is not None
+                    and value.get('currency') == r['accrued'].get('currency')
+                    and Decimal(value['amount']) == Decimal(r['accrued']['amount']) for r in candidates)
+            price = commission.get('seller_price') or {}
+            value = Decimal(gross['amount'])
+            relations.add(json.dumps({'realization_sign': '+' if value > 0 else '-' if value < 0 else '0',
+               'has_commission_quantity': any(isinstance(r.get('quantity'), int) and r['quantity'] > 0 for r in candidates),
+               'gross_equals_quantity_times_seller_price': any(price.get('amount') is not None
+                   and price.get('currency') == gross.get('currency') and r.get('quantity') is not None
+                   and abs(value) == abs(Decimal(price['amount']) * Decimal(r['quantity'])) for r in candidates),
+               'matching_fields': matches}, sort_keys=True))
+    print('SALE_FIELD_RELATIONS=' + json.dumps([json.loads(r) for r in sorted(relations)]), flush=True)
 
 
 if __name__ == '__main__':
