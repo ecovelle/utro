@@ -43,6 +43,8 @@ def normalize_day(operations, postings, types, sku_map, day):
                 continue
             gross_value, gross_currency = amount(gross)
             if not gross_value:
+                if article is None or article in OZ_ART:
+                    quantity_error = 'Нулевая реализация не подтверждает направление товарного события'
                 continue
             if article is None:
                 quantity_error = 'Не сопоставлен SKU из финансового события с артикулом'
