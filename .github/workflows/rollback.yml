@@ -1,0 +1,42 @@
+name: Восстановить резервную копию
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: utro
+  cancel-in-progress: false
+
+jobs:
+  restore:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Вернуть проверенную версию от 12 октября 2026
+        run: |
+          git config user.name utro-bot
+          git config user.email utro-bot@users.noreply.github.com
+          python3 scripts/restore_backup.py --push --safety-branch "codex/before-rollback-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+      - name: Подготовить сохранённую страницу
+        run: |
+          mkdir -p "$RUNNER_TEMP/utro-pages"
+          cp index.html robots.txt "$RUNNER_TEMP/utro-pages/"
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ runner.temp }}/utro-pages
+      - name: Вернуть страницу на GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
