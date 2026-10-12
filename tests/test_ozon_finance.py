@@ -148,7 +148,7 @@ class FinanceCalculationTests(unittest.TestCase):
         state = empty_history(); status={}
         with patch.object(collector,'today',dt.date(2026,10,12)),patch.object(collector,'fetch_types',return_value=TYPES),patch.object(collector,'fetch_day',return_value=[]),patch.object(collector,'log'):
             collector.oz_finance(state,status)
-        self.assertEqual(len(state['oz_finance']['days']),97)
+        self.assertEqual(len(state['oz_finance']['days']),90)
         self.assertNotIn('2026-10-12',state['oz_finance']['days'])
         self.assertEqual(state['oz_finance']['days'][DAY]['buyouts'],0)
 
