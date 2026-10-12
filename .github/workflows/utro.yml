@@ -8,6 +8,8 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: utro
@@ -15,8 +17,12 @@ concurrency:
 
 jobs:
   build:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
 
@@ -66,3 +72,16 @@ jobs:
             git push
             echo "опубликовано: https://ecovelle.github.io/utro/"
           fi
+
+      - name: Подготовить страницу для Pages
+        run: |
+          mkdir -p "$RUNNER_TEMP/utro-pages"
+          cp index.html robots.txt "$RUNNER_TEMP/utro-pages/"
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ runner.temp }}/utro-pages
+
+      - name: Опубликовать страницу на GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
