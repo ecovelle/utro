@@ -50,13 +50,13 @@ const {chromium} = require(process.env.PLAYWRIGHT_PATH || 'playwright');
  assert.equal(await page.locator('#summary .value').first().innerText(),'0');
  // Financial data remains usable when order history is missing, with independent coverage.
  await page.evaluate(()=>{D.markets.oz.days={};D.markets.oz.financeDays={'2026-10-11':{netPayout:12345,buyouts:3,returns:1,products:{ecovelle_245:{buyouts:3,returns:1}}}};D.markets.oz.financeCurrency='KZT';setRange('2026-10-11','2026-10-11');});
- assert.match(await page.locator('#summary article').nth(1).innerText(),/123,45 KZT/);
- assert.match(await page.locator('#summary article').nth(1).innerText(),/подтверждены 1 из 1 дней/);
+ assert.match(await page.locator('#summary article').nth(1).innerText(),/123,45 ₸/);
+ assert.match(await page.locator('#summary article').nth(1).innerText(),/подтверждено 1\/1 дн/);
  await page.evaluate(()=>{setRange('2026-10-10','2026-10-11');});
  assert.match(await page.locator('#notice').innerText(),/Начисления Ozon: 1 из 2 дней/);
  await page.evaluate(()=>{D.markets.oz.financeDays['2026-10-11'].buyouts=null;D.markets.oz.financeDays['2026-10-11'].returns=null;D.markets.oz.financeDays['2026-10-11'].products={};setRange('2026-10-11','2026-10-11');});
- assert.match(await page.locator('#summary article').nth(1).innerText(),/123,45 KZT/);
- assert.match(await page.locator('#summary article').nth(1).innerText(),/подтверждены 0 из 1 дней/);
+ assert.match(await page.locator('#summary article').nth(1).innerText(),/123,45 ₸/);
+ assert.match(await page.locator('#summary article').nth(1).innerText(),/подтверждено 0\/1 дн/);
  assert.deepEqual(errors,[]);
  // The encrypted gate must actually execute the decrypted dashboard scripts.
  const locked=await browser.newPage();locked.on('pageerror',error=>errors.push(error.message));
