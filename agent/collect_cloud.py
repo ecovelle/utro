@@ -47,8 +47,19 @@ def req(url, method='GET', headers=None, body=None, timeout=180, tries=4):
             txt = e.read().decode('utf-8', 'replace')[:300]
             last = f'{e.code} {txt}'
             if e.code == 429 and i < tries - 1:
-                log(f'  429 — жду 65 с и повторяю: {url[:80]}')
-                time.sleep(65)
+                retry_after = e.headers.get('Retry-After', '65')
+                try:
+                    wait = max(1, float(retry_after))
+                except ValueError:
+                    from email.utils import parsedate_to_datetime
+                    try:
+                        wait = max(1, (parsedate_to_datetime(retry_after) - dt.datetime.now(dt.timezone.utc)).total_seconds())
+                    except (TypeError, ValueError):
+                        wait = 65
+                if wait > 600:
+                    raise RuntimeError('Лимит API: повтор разрешён позже; сохраняем последние успешные данные')
+                log(f'  429 — жду {wait:g} с по Retry-After: {url[:80]}')
+                time.sleep(wait)
                 continue
             if e.code >= 500 and i < tries - 1:
                 time.sleep(5)
@@ -64,6 +75,7 @@ def req(url, method='GET', headers=None, body=None, timeout=180, tries=4):
 
 from history import read_history, write_history, add_coverage
 from metrics import WB_ART, OZ_ART, normalize_oz, normalize_wb
+from ozon_finance import fetch_types, fetch_day, fetch_postings, normalize_day
 
 WB_NM = {257464190: 'Ecovelle245', 269707700: 'Ecovelle290',
          264934861: 'ecovelle155', 271132665: 'EcovelleMix'}
@@ -100,7 +112,7 @@ def oz_orders(state):
     first = month_shift(today, -int(os.environ.get('HISTORY_MONTHS', '24')))
     start = first if not state['coverage']['oz'] else max(first, today - dt.timedelta(days=89))
     end = today + dt.timedelta(days=1)
-    pending = {}
+    pending, sku_map = {}, {}
     left = start
     while left < end:
         right = min(month_shift(left.replace(day=1), 1), end)
@@ -125,6 +137,9 @@ def oz_orders(state):
                     raise RuntimeError('Ozon: пагинация повторила страницу')
                 seen |= page_ids
                 for record in rows:
+                    for product in record.get('products', []):
+                        if product.get('sku') is not None and product.get('offer_id'):
+                            sku_map[str(product['sku'])] = product['offer_id']
                     normalized = normalize_oz(record, scheme)
                     if normalized:
                         pending[normalized[0]] = normalized[1]
@@ -136,9 +151,55 @@ def oz_orders(state):
                 offset += 1000
         left = right
     state['oz'].update(pending)
+    state.setdefault('oz_sku_map', {}).update(sku_map)
     state['coverage']['oz'] = add_coverage(state['coverage']['oz'], start.isoformat(), (today-dt.timedelta(days=1)).isoformat())
     state['updated']['oz'] = now.isoformat()
     log(f'Ozon: {len(pending)} отправлений обновлено')
+
+
+def oz_finance(state, status):
+    finance = state.setdefault('oz_finance', {'days': {}, 'types': {}})
+    days = finance['days']
+    earliest = max(dt.date(2022, 1, 1), month_shift(today, -int(os.environ.get('HISTORY_MONTHS', '24'))))
+    end = today - dt.timedelta(days=1)
+    refresh = [end - dt.timedelta(days=n) for n in range(7) if end - dt.timedelta(days=n) >= earliest]
+    budget = max(1, min(180, int(os.environ.get('OZON_FINANCE_BACKFILL_DAYS', '90'))))
+    missing, cursor = [], end
+    while cursor >= earliest and len(missing) < budget:
+        if cursor.isoformat() not in days and cursor not in refresh:
+            missing.append(cursor)
+        cursor -= dt.timedelta(days=1)
+    requested = refresh + missing
+    operations = {}
+    try:
+        finance['types'] = fetch_types(oz_post)
+        for day in requested:
+            key = day.isoformat()
+            operations[key] = fetch_day(oz_post, key)
+    except Exception:
+        # Completed days are still safe to retain, even if an older day failed.
+        if not operations:
+            raise
+        status['oz_finance'] = {'ok': False, 'error': 'Не все запрошенные дни начислений удалось обновить'}
+    numbers = {r.get('unit_number') for rows in operations.values() for r in rows
+               if r.get('accrued_category') == 'POSTING' and r.get('unit_number')}
+    try:
+        postings = fetch_postings(oz_post, numbers)
+        status['oz_quantities'] = {'ok': True}
+    except Exception:
+        postings = {}
+        status['oz_quantities'] = {'ok': False, 'error': 'Метод количеств недоступен; начисления собираются отдельно'}
+    unresolved = False
+    for day, rows in operations.items():
+        normalized = normalize_day(rows, postings, finance['types'], state.get('oz_sku_map', {}), day)
+        days[day] = normalized
+        unresolved |= normalized['quantityError'] is not None
+    if unresolved:
+        status['oz_quantities'] = {'ok': False, 'error': 'Не все количества подтверждены: указаны пропуски по датам'}
+    if operations:
+        state['updated']['oz_finance'] = now.isoformat()
+    status.setdefault('oz_finance', {'ok': True})
+    log('Ozon: начисления сохранены в зашифрованную историю; полные даты и количества проверяются отдельно')
 
 
 def wb_pages(kind, since):
@@ -363,6 +424,12 @@ def main():
         except Exception as exc:
             status[name] = {'ok': False, 'error': str(exc)}
             log(f'!! {name}: {exc}')
+    try:
+        oz_finance(state, status)
+    except Exception:
+        status['oz_finance'] = {'ok': False, 'error': 'Начисления Ozon не обновились; сохранена предыдущая история'}
+        status['oz_quantities'] = {'ok': False, 'error': 'Количества Ozon не обновились'}
+        log('!! oz_finance: финансовый источник не обновился')
     for name, function in [('oz_stock', oz_stock), ('oz_actions', oz_actions), ('wb_stock', wb_stock),
                            ('wb_prices', wb_prices), ('wb_feedback', wb_feedback), ('wb_promos', wb_promos)]:
         try:

@@ -14,9 +14,9 @@ def make_demo():
     state = empty_history()
     today = dt.date(2026, 10, 12)
     timestamp = '2026-10-12T05:10:00+03:00'
-    state['run'] = {'today': today.isoformat(), 'generated': timestamp, 'status': {key: {'ok': True} for key in ['oz','wb','oz_stock','wb_stock','wb_prices','wb_feedback','oz_actions','wb_promos']}}
+    state['run'] = {'today': today.isoformat(), 'generated': timestamp, 'status': {key: {'ok': True} for key in ['oz','wb','oz_stock','wb_stock','wb_prices','wb_feedback','oz_actions','wb_promos','oz_finance','oz_quantities']}}
     state['coverage'] = {'oz': [['2024-10-12','2026-10-11']], 'wb': [['2026-07-15','2026-10-11']]}
-    state['updated'] = {'oz': timestamp, 'wb': timestamp}
+    state['updated'] = {'oz': timestamp, 'wb': timestamp, 'oz_finance':timestamp}
     day = dt.date(2024, 10, 12)
     while day < today:
         index = (day - dt.date(2024,10,12)).days
@@ -46,6 +46,11 @@ def make_demo():
                         if (index+n)%41==0 and day+dt.timedelta(days=7)<today:
                             source.update(saleID='R'+srid,date=(day+dt.timedelta(days=7)).isoformat()+'T12:00:00')
                             ident,row=normalize_wb(source,'sales');state['wb_sales'][ident]=row
+        fin_products={art:{'buyouts':18+i*5+index%7,'returns':int((index+i)%21==0)} for i,art in enumerate(OZ_ART)}
+        state.setdefault('oz_finance',{'days':{},'types':{}})['days'][day.isoformat()]={
+            'amounts':{'KZT':sum((p['buyouts']-p['returns'])*(250019+i*30000) for i,p in enumerate(fin_products.values()))-15000},
+            'products':fin_products,'buyouts':sum(p['buyouts'] for p in fin_products.values()),
+            'returns':sum(p['returns'] for p in fin_products.values()),'quantityError':None}
         day += dt.timedelta(days=1)
     state['snapshots'] = {
         'oz_stock': {'asOf':timestamp,'data':[{'sku':art,'warehouse':'Алматы','free':count,'promised':0,'reserved':0} for art,count in zip(OZ_ART,[740,290,1370])]},
