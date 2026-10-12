@@ -114,7 +114,7 @@ def month_shift(day, months):
 
 def oz_orders(state):
     # Monthly windows avoid API range limits. Refresh recent statuses; keep older records.
-    first = month_shift(today, -int(os.environ.get('HISTORY_MONTHS', '24')))
+    first = today - dt.timedelta(days=90)
     start = first if not state['coverage']['oz'] or state.get('oz_api_version') != 2 else max(first, today - dt.timedelta(days=89))
     end = today + dt.timedelta(days=1)
     pending, sku_map = {}, {}
@@ -165,7 +165,7 @@ def oz_orders(state):
 def oz_finance(state, status):
     finance = state.setdefault('oz_finance', {'days': {}, 'types': {}})
     days = finance['days']
-    earliest = max(dt.date(2022, 1, 1), month_shift(today, -int(os.environ.get('HISTORY_MONTHS', '24'))))
+    earliest = max(dt.date(2022, 1, 1), today - dt.timedelta(days=90))
     end = today - dt.timedelta(days=1)
     refresh = [end - dt.timedelta(days=n) for n in range(7) if end - dt.timedelta(days=n) >= earliest]
     budget = max(1, min(180, int(os.environ.get('OZON_FINANCE_BACKFILL_DAYS', '90'))))
