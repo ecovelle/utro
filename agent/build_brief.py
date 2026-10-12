@@ -49,6 +49,17 @@ def build_data(state):
                                    'updatedAt': state['updated'].get(market),
                                    'products': OZ_ART if market == 'oz' else WB_ART,
                                    'buyoutsAvailable': market == 'wb'}
+        if market == 'oz':
+            finance = state.get('oz_finance', {}).get('days', {})
+            finance = {day: row for day, row in finance.items() if day < today.isoformat()}
+            currencies = {code for row in finance.values() for code in row['amounts']}
+            finance_currency = next(iter(currencies)) if len(currencies) == 1 else (currency if not currencies else None)
+            data['markets'][market].update(
+                financeDays={day: {'netPayout': row['amounts'].get(finance_currency, 0) if finance_currency else None,
+                                  'buyouts': row['buyouts'], 'returns': row['returns'], 'products': row['products'],
+                                  'quantityError': row.get('quantityError')} for day, row in finance.items()},
+                financeCurrency=finance_currency, financeUpdatedAt=state['updated'].get('oz_finance'),
+                buyoutsAvailable=any(row['buyouts'] is not None for row in finance.values()))
         rate_start = (today - dt.timedelta(days=30)).isoformat()
         rate_end = (today - dt.timedelta(days=1)).isoformat()
         products = OZ_ART if market == 'oz' else WB_ART
