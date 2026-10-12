@@ -52,6 +52,10 @@ def build_data(state):
         if market == 'oz':
             finance = state.get('oz_finance', {}).get('days', {})
             finance = {day: row for day, row in finance.items() if day < today.isoformat()}
+            for row in finance.values():
+                for kind in ('buyouts', 'returns'):
+                    if row[kind] is not None and (row[kind] < 0 or sum(p[kind] for p in row['products'].values()) != row[kind]):
+                        raise ValueError('Ozon: итог количества не совпадает с товарными строками')
             currencies = {code for row in finance.values() for code in row['amounts']}
             finance_currency = next(iter(currencies)) if len(currencies) == 1 else (currency if not currencies else None)
             data['markets'][market].update(
@@ -86,6 +90,14 @@ def render(data, template=None):
 def main():
     state = read_history(os.environ.get('PAGE_PASS', ''))
     data = build_data(state)
+    recent = [(dt.date.fromisoformat(data['today']) - dt.timedelta(days=n)).isoformat() for n in range(1, 8)]
+    finance = data['markets']['oz']['financeDays']
+    health = {'finance_last_7_days_complete': all(day in finance for day in recent),
+              'finance_currency_known': data['markets']['oz']['financeCurrency'] is not None,
+              'quantities_last_7_days_confirmed': all(day in finance and finance[day]['buyouts'] is not None for day in recent),
+              'quantity_gap_reasons': sorted({finance[day]['quantityError'] for day in recent if day in finance and finance[day]['quantityError']}),
+              'sources': {name: bool(value.get('ok')) for name, value in data['status'].items()}}
+    print('REPORT_HEALTH=' + json.dumps(health, ensure_ascii=False))
     (HERE / 'utro-ecovelle-plain.html').write_text(render(data), encoding='utf-8')
     print('Сводка собрана за полные дни до', data['today'], '(день не включён)')
 
