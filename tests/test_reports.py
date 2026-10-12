@@ -146,6 +146,24 @@ class HistoryTests(unittest.TestCase):
 
 
 class BuildTests(unittest.TestCase):
+    def test_report_clips_history_to_90_days_without_deleting_archive(self):
+        s = state()
+        s['coverage']['oz'] = [['2024-01-01', '2026-10-12']]
+        s['coverage']['wb'] = [['2024-01-01', '2026-10-12']]
+        put(s, 'oz', normalize_oz(posting(posting_number='old', created_at='2026-07-13T12:00:00Z'), 'fbo'))
+        s['oz_finance'] = {'days': {day: {'amounts':{code:100}, 'buyouts':0, 'returns':0, 'products':{}, 'quantityError':None}
+                                  for day, code in [('2026-07-13','RUB'),('2026-07-14','KZT'),('2026-10-12','RUB')]}}
+        data = build_data(s)
+        self.assertEqual(data['periodStart'], '2026-07-14')
+        for market in data['markets'].values():
+            self.assertEqual(len(market['days']), 90)
+            self.assertEqual(market['coverage'], [['2026-07-14','2026-10-11']])
+        self.assertEqual(set(data['markets']['oz']['financeDays']), {'2026-07-14'})
+        self.assertEqual(data['markets']['oz']['financeCurrency'], 'KZT')
+        self.assertEqual(len(s['oz_finance']['days']), 3)
+        self.assertEqual(len(s['oz']), 1)
+        self.assertEqual(s['coverage']['oz'][0][0], '2024-01-01')
+
     def test_uncovered_days_remain_absent_and_today_excluded(self):
         s = state()
         s['coverage']['wb'] = [['2026-10-01', '2026-10-03'], ['2026-10-06', '2026-10-11']]
