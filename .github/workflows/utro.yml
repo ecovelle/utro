@@ -2,6 +2,11 @@ name: Утро Ecovelle
 
 on:
   workflow_dispatch:
+    inputs:
+      probe_only:
+        description: Проверить доступ к начислениям Ozon без публикации сводки
+        type: boolean
+        default: false
   schedule:
     - cron: '7 21,22,23 * * *'   # 02:07 / 03:07 / 04:07 Астана — 05:07 / 06:07 / 07:07 Китай
     - cron: '7 0,1 * * *'        # 05:07 / 06:07 Астана — 08:07 / 09:07 Китай
@@ -35,7 +40,15 @@ jobs:
       - name: Проверить расчёты
         run: python3 -m unittest discover -s tests -v
 
+      - name: Проверить доступ к новым начислениям Ozon
+        if: inputs.probe_only == true
+        env:
+          OZON_CLIENT_ID: ${{ secrets.OZON_CLIENT_ID }}
+          OZON_API_KEY: ${{ secrets.OZON_API_KEY }}
+        run: python3 scripts/probe_ozon_finance.py
+
       - name: Собрать данные Ozon и Wildberries
+        if: inputs.probe_only != true
         working-directory: agent
         env:
           OZON_CLIENT_ID: ${{ secrets.OZON_CLIENT_ID }}
@@ -45,6 +58,7 @@ jobs:
         run: python3 collect_cloud.py
 
       - name: Собрать и зашифровать страницу
+        if: inputs.probe_only != true
         working-directory: agent
         env:
           PAGE_PASS: ${{ secrets.PAGE_PASS }}
@@ -61,6 +75,7 @@ jobs:
           PY
 
       - name: Опубликовать
+        if: inputs.probe_only != true
         run: |
           git config user.name  utro-bot
           git config user.email utro-bot@users.noreply.github.com
@@ -74,14 +89,17 @@ jobs:
           fi
 
       - name: Подготовить страницу для Pages
+        if: inputs.probe_only != true
         run: |
           mkdir -p "$RUNNER_TEMP/utro-pages"
           cp index.html robots.txt "$RUNNER_TEMP/utro-pages/"
 
       - uses: actions/upload-pages-artifact@v3
+        if: inputs.probe_only != true
         with:
           path: ${{ runner.temp }}/utro-pages
 
       - name: Опубликовать страницу на GitHub Pages
+        if: inputs.probe_only != true
         id: deployment
         uses: actions/deploy-pages@v4
