@@ -51,19 +51,46 @@ def normalize_day(operations, postings, types, sku_map, day):
                 continue
             if article not in OZ_ART:
                 continue
-            try:
-                fee = amount(commission.get('commission'))
-                unit_price, unit_currency = amount(commission.get('seller_price'))
-            except (ValueError, ArithmeticError):
-                quantity_error = 'Нет подтверждённой цены или комиссии для количества'
+            fees = set()
+            for key in ('commission', 'sale_commission'):
+                try:
+                    value, code = amount(commission.get(key))
+                    fees.add((abs(value), code))
+                except (ValueError, ArithmeticError):
+                    pass
+            if not fees:
+                quantity_error = 'Нет подтверждённой комиссии для количества'
                 continue
+            # Buyer discounts may be credited separately as points/co-investment.
+            revenues = {abs(gross_value)}
+            compensated = gross_value
+            same_currency = True
+            for key in ('bonus', 'coinvestment'):
+                obj = commission.get(key)
+                if obj and obj.get('amount') is not None:
+                    value, code = amount(obj)
+                    same_currency &= code == gross_currency
+                    compensated += value
+            if same_currency:
+                revenues.add(abs(compensated))
             number = operation.get('unit_number')
             candidates = []
             for i, line in enumerate(pending.get(number, [])):
-                q = line.get('quantity')
-                if (str(line.get('sku')) == platform_sku and isinstance(q, int) and not isinstance(q, bool) and q > 0
-                        and amount(line.get('accrued')) == fee and unit_currency == gross_currency
-                        and abs(gross_value) == abs(unit_price) * q):
+                raw_q = line.get('quantity')
+                if (str(line.get('sku')) != platform_sku or not isinstance(raw_q, int) or isinstance(raw_q, bool)
+                        or raw_q == 0 or (raw_q < 0 and gross_value > 0)):
+                    continue
+                q = abs(raw_q)
+                try:
+                    price = commission.get('seller_price')
+                    if not isinstance(price, dict) or price.get('amount') is None or not price.get('currency'):
+                        price = line.get('seller_price')
+                    unit_price, unit_currency = amount(price)
+                    fee, fee_currency = amount(line.get('accrued'))
+                except (ValueError, ArithmeticError):
+                    continue
+                if ((abs(fee), fee_currency) in fees and unit_currency == gross_currency
+                        and abs(unit_price) * q in revenues):
                     candidates.append((i, q))
             if not candidates or len({q for _, q in candidates}) != 1:
                 quantity_error = 'Количество не подтверждено сопоставлением двух методов Ozon'
