@@ -10,6 +10,9 @@ from history import empty_history
 import collect_cloud as collector
 import datetime as dt
 import io
+import tempfile
+from contextlib import redirect_stdout
+import build_brief
 import urllib.error
 from email.message import Message
 from unittest.mock import patch, MagicMock
@@ -70,6 +73,10 @@ class FinanceCalculationTests(unittest.TestCase):
         result = normalize_day([row], {'p1':[line(type_id=32)]}, TYPES, SKU_MAP, DAY)
         self.assertEqual(result['buyouts'], 0)
 
+    def test_zero_realization_is_not_assumed_zero_units(self):
+        result=normalize_day([event(gross='0',fee='0')],{},TYPES,SKU_MAP,DAY)
+        self.assertIsNone(result['buyouts'])
+
     def test_money_validation_and_distinct_currencies(self):
         self.assertEqual(amount({'amount':'124.33','currency':'KZT'}), (12433,'KZT'))
         for value in [{'currency':'KZT'},{'amount':'NaN','currency':'KZT'}]:
@@ -91,6 +98,28 @@ class FinanceCalculationTests(unittest.TestCase):
         state['oz_finance']['days'][DAY]['amounts']['RUB']=100
         self.assertIsNone(build_data(state)['markets']['oz']['financeDays'][DAY]['netPayout'])
 
+    def test_inconsistent_product_total_blocks_render(self):
+        state=empty_history()
+        state['run']={'today':'2026-10-12','generated':'2026-10-12T00:00:00+03:00','status':{}}
+        row=normalize_day([event()],{'p1':[line()]},TYPES,SKU_MAP,DAY)
+        row['buyouts']=4
+        state['oz_finance']={'days':{DAY:row}}
+        with self.assertRaisesRegex(ValueError,'не совпадает'):
+            build_data(state)
+
+    def test_report_health_logs_no_financial_values(self):
+        state=empty_history()
+        state['run']={'today':'2026-10-12','generated':'2026-10-12T00:00:00+03:00','status':{'oz_finance':{'ok':True}}}
+        row=normalize_day([event(total='87871.23')],{'p1':[line()]},TYPES,SKU_MAP,DAY)
+        state['oz_finance']={'days':{DAY:row}}
+        output=io.StringIO()
+        with tempfile.TemporaryDirectory() as root,patch.object(build_brief,'read_history',return_value=state),patch.object(build_brief,'HERE',Path(root)),redirect_stdout(output):
+            (Path(root)/'brief.html').write_text('<html>__DATA__</html>')
+            build_brief.main()
+        self.assertIn('REPORT_HEALTH=',output.getvalue())
+        self.assertNotIn('87871',output.getvalue())
+        self.assertNotIn('p1',output.getvalue())
+
     def test_bounded_backfill_and_empty_days(self):
         state = empty_history(); status={}
         with patch.object(collector,'today',dt.date(2026,10,12)),patch.object(collector,'fetch_types',return_value=TYPES),patch.object(collector,'fetch_day',return_value=[]),patch.object(collector,'log'):
@@ -105,6 +134,27 @@ class FinanceCalculationTests(unittest.TestCase):
             collector.oz_finance(state,status)
         self.assertEqual(list(state['oz_finance']['days']),[DAY])
         self.assertFalse(status['oz_finance']['ok'])
+
+    def test_successful_quantity_batches_survive_a_later_failure_and_resume(self):
+        state=empty_history();state['oz_sku_map']=SKU_MAP;status={}
+        operations=[]
+        for n in range(40):
+            row=event(ident=n+1);row['unit_number']='p'+str(n);operations.append(row)
+        calls=[]
+        def quantities(post,numbers):
+            calls.append(list(numbers))
+            if len(calls)==2:
+                raise RuntimeError('rate limited')
+            return {number:[line()] for number in numbers}
+        with patch.object(collector,'today',dt.date(2026,10,12)),patch.object(collector,'fetch_types',return_value=TYPES),patch.object(collector,'fetch_day',side_effect=lambda post,day:operations if day==DAY else []),patch.object(collector,'fetch_postings',side_effect=quantities),patch.object(collector,'log'):
+            collector.oz_finance(state,status)
+            self.assertEqual(len(state['oz_finance']['postings']),20)
+            self.assertEqual(state['oz_finance']['days'][DAY]['amounts']['KZT'],100000)
+            self.assertIsNone(state['oz_finance']['days'][DAY]['buyouts'])
+            collector.oz_finance(state,{})
+        self.assertEqual(len(state['oz_finance']['postings']),40)
+        self.assertEqual(state['oz_finance']['days'][DAY]['buyouts'],120)
+        self.assertTrue(set(calls[2]).isdisjoint(calls[0]))
 
 
 class RateLimitTests(unittest.TestCase):
