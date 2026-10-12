@@ -48,6 +48,30 @@ class FinanceCalculationTests(unittest.TestCase):
         self.assertEqual((result['buyouts'],result['returns']), (0,2))
         self.assertEqual(result['amounts']['KZT'], -1900)
 
+    def test_signed_return_quantity_and_commission_notation(self):
+        result=normalize_day([event(gross='-20',fee='-2',total='-19')],
+                             {'p1':[line(quantity=-2,fee='2')]},TYPES,SKU_MAP,DAY)
+        self.assertEqual((result['buyouts'],result['returns']),(0,2))
+
+    def test_discount_compensation_and_price_list_commission(self):
+        row=event(gross='27',fee='-1')
+        commission=row['posting']['products'][0]['commission']
+        commission['sale_commission']={'amount':'-3','currency':'KZT'}
+        commission['bonus']={'amount':'3','currency':'KZT'}
+        result=normalize_day([row],{'p1':[line()]},TYPES,SKU_MAP,DAY)
+        self.assertEqual(result['buyouts'],3)
+        commission['bonus']['currency']='RUB'
+        self.assertIsNone(normalize_day([row],{'p1':[line()]},TYPES,SKU_MAP,DAY)['buyouts'])
+
+    def test_price_can_come_from_matching_posting_line(self):
+        for price in (None,{'amount':None,'currency':'KZT'}):
+            row=event();row['posting']['products'][0]['commission']['seller_price']=price
+            result=normalize_day([row],{'p1':[line(seller_price={'amount':'10','currency':'KZT'})]},TYPES,SKU_MAP,DAY)
+            self.assertEqual(result['buyouts'],3)
+
+    def test_negative_quantity_is_not_accepted_as_a_positive_sale(self):
+        self.assertIsNone(normalize_day([event()],{'p1':[line(quantity=-3)]},TYPES,SKU_MAP,DAY)['buyouts'])
+
     def test_unconfirmed_units_do_not_erase_money_or_become_zero(self):
         result = normalize_day([event()], {'p1': [line(quantity=None)]}, TYPES, SKU_MAP, DAY)
         self.assertIsNone(result['buyouts'])
@@ -143,7 +167,7 @@ class FinanceCalculationTests(unittest.TestCase):
         calls=[]
         def quantities(post,numbers):
             calls.append(list(numbers))
-            if len(calls)==2:
+            if len(calls)==21:
                 raise RuntimeError('rate limited')
             return {number:[line()] for number in numbers}
         with patch.object(collector,'today',dt.date(2026,10,12)),patch.object(collector,'fetch_types',return_value=TYPES),patch.object(collector,'fetch_day',side_effect=lambda post,day:operations if day==DAY else []),patch.object(collector,'fetch_postings',side_effect=quantities),patch.object(collector,'log'):
@@ -154,7 +178,7 @@ class FinanceCalculationTests(unittest.TestCase):
             collector.oz_finance(state,{})
         self.assertEqual(len(state['oz_finance']['postings']),40)
         self.assertEqual(state['oz_finance']['days'][DAY]['buyouts'],120)
-        self.assertTrue(set(calls[2]).isdisjoint(calls[0]))
+        self.assertTrue(set(calls[21]).isdisjoint(set(n for call in calls[:20] for n in call)))
 
 
 class RateLimitTests(unittest.TestCase):
