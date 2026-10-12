@@ -58,6 +58,11 @@ def req(url, method='GET', headers=None, body=None, timeout=180, tries=4):
                         wait = 65
                 if wait > 600:
                     raise RuntimeError('Лимит API: повтор разрешён позже; сохраняем последние успешные данные')
+                if urllib.parse.urlsplit(url).path == '/v1/finance/accrual/postings':
+                    # Retry-After is a minimum. Sustained overload needs a longer backoff.
+                    if wait > 120:
+                        raise RuntimeError('Лимит финансового API: длительное ожидание; сохраняем успешные партии')
+                    wait = max(wait, min(120, 65 * (2 ** i)))
                 log(f'  429 — жду {wait:g} с по Retry-After: {url[:80]}')
                 time.sleep(wait)
                 continue
@@ -75,7 +80,7 @@ def req(url, method='GET', headers=None, body=None, timeout=180, tries=4):
 
 from history import read_history, write_history, add_coverage
 from metrics import WB_ART, OZ_ART, normalize_oz, normalize_wb
-from ozon_finance import fetch_types, fetch_day, fetch_postings, normalize_day
+from ozon_finance import amount as finance_amount, fetch_types, fetch_day, fetch_postings, normalize_day
 
 WB_NM = {257464190: 'Ecovelle245', 269707700: 'Ecovelle290',
          264934861: 'ecovelle155', 271132665: 'EcovelleMix'}
@@ -169,7 +174,9 @@ def oz_finance(state, status):
         if cursor.isoformat() not in days and cursor not in refresh:
             missing.append(cursor)
         cursor -= dt.timedelta(days=1)
-    requested = refresh + missing
+    pending_quantity_days = [dt.date.fromisoformat(day) for day in sorted(days, reverse=True)
+                             if days[day]['buyouts'] is None and earliest.isoformat() <= day <= end.isoformat()]
+    requested = sorted(set(refresh + missing + pending_quantity_days[:30]), reverse=True)
     operations = {}
     try:
         finance['types'] = fetch_types(oz_post)
@@ -181,14 +188,43 @@ def oz_finance(state, status):
         if not operations:
             raise
         status['oz_finance'] = {'ok': False, 'error': 'Не все запрошенные дни начислений удалось обновить'}
-    numbers = {r.get('unit_number') for rows in operations.values() for r in rows
-               if r.get('accrued_category') == 'POSTING' and r.get('unit_number')}
-    try:
-        postings = fetch_postings(oz_post, numbers)
-        status['oz_quantities'] = {'ok': True}
-    except Exception:
-        postings = {}
-        status['oz_quantities'] = {'ok': False, 'error': 'Метод количеств недоступен; начисления собираются отдельно'}
+    postings = finance.setdefault('postings', {})
+    numbers, recent_numbers = [], set()
+    sku_map = state.get('oz_sku_map', {})
+    def quantity_product(product):
+        if sku_map.get(str(product.get('sku'))) not in OZ_ART:
+            return False
+        try:
+            return finance_amount((product.get('commission') or {}).get('sale_amount'))[0] != 0
+        except (ValueError, ArithmeticError):
+            return False
+    for day, rows in operations.items():
+        for row in rows:
+            if row.get('accrued_category') != 'POSTING' or not row.get('unit_number'):
+                continue
+            # Fee-only postings and other products do not need quantity requests.
+            eligible = any(quantity_product(p) for p in (row.get('posting') or {}).get('products', []))
+            if not eligible:
+                continue
+            number = row['unit_number']
+            if number not in numbers:
+                numbers.append(number)
+            if day >= (today - dt.timedelta(days=7)).isoformat():
+                recent_numbers.add(number)
+    needed = ([n for n in numbers if n in recent_numbers and n not in postings] +
+              [n for n in numbers if n in recent_numbers and n in postings] +
+              [n for n in numbers if n not in recent_numbers and n not in postings])[:400]
+    status['oz_quantities'] = {'ok': True}
+    for offset in range(0, len(needed), 20):
+        try:
+            batch = fetch_postings(oz_post, needed[offset:offset + 20])
+            sale_types = {int(i) for i, value in finance['types'].items() if value['name'] == 'SaleCommission'}
+            for number, rows in batch.items():
+                postings[number] = [{k: row.get(k) for k in ('accrual_date','sku','type_id','quantity','accrued')}
+                                    for row in rows if row.get('type_id') in sale_types]
+        except Exception:
+            status['oz_quantities'] = {'ok': False, 'error': 'Не все партии количеств обновились; успешные ответы сохранены'}
+            break
     unresolved = False
     for day, rows in operations.items():
         normalized = normalize_day(rows, postings, finance['types'], state.get('oz_sku_map', {}), day)
