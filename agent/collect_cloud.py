@@ -6,6 +6,7 @@ from zoneinfo import ZoneInfo
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ERRORS = []
+LAST_REQUEST = {}
 
 
 def log(*a):
@@ -33,6 +34,12 @@ def req(url, method='GET', headers=None, body=None, timeout=180, tries=4):
     for i in range(tries):
         r = urllib.request.Request(url, data=data, method=method, headers=headers or {})
         try:
+            host = urllib.parse.urlsplit(url).netloc
+            interval = 65 if host == 'statistics-api.wildberries.ru' else (1.2 if host == 'api-seller.ozon.ru' else 0.6)
+            delay = interval - (time.monotonic() - LAST_REQUEST.get(host, 0))
+            if delay > 0:
+                time.sleep(delay)
+            LAST_REQUEST[host] = time.monotonic()
             with urllib.request.urlopen(r, timeout=timeout) as resp:
                 raw = resp.read().decode('utf-8', 'replace')
             return json.loads(raw) if raw.strip() else None
@@ -55,263 +62,146 @@ def req(url, method='GET', headers=None, body=None, timeout=180, tries=4):
     raise RuntimeError(f'{method} {url[:90]} -> {last}')
 
 
-# ---------------------------------------------------------------- даты
-now = dt.datetime.now(ZoneInfo('Asia/Shanghai'))
-arg = sys.argv[1] if len(sys.argv) > 1 and not sys.argv[1].startswith('-') else None
-today = dt.date.fromisoformat(arg) if arg else now.date()
-m1 = today.replace(day=1)                                    # 1-е текущего месяца
-m0 = (m1 - dt.timedelta(days=1)).replace(day=1)              # 1-е прошлого месяца
-since30 = (today - dt.timedelta(days=31)).isoformat()        # горизонт дневных рядов
-TO = (today + dt.timedelta(days=1)).isoformat()
-log(f'== Утро Ecovelle: сбор за {m0} … {today} (сегодня {today})')
+from history import read_history, write_history, add_coverage
+from metrics import WB_ART, OZ_ART, normalize_oz, normalize_wb
 
-OZ_ID, OZ_KEY, WB_TOKEN = env('OZON_CLIENT_ID'), env('OZON_API_KEY'), env('WB_TOKEN')
-
-PADS = {'ecovelle_245', 'ecovelle_290', 'ecovelle_155'}          # offer_id Ozon
-PADSKU = {5358370989, 5358332160, 5372746369}                    # sku Ozon (финансы)
-WB_ART = ['Ecovelle245', 'Ecovelle290', 'ecovelle155', 'EcovelleMix']
 WB_NM = {257464190: 'Ecovelle245', 269707700: 'Ecovelle290',
          264934861: 'ecovelle155', 271132665: 'EcovelleMix'}
 WB_NORMAL = {'Ecovelle245': 504, 'Ecovelle290': 503, 'ecovelle155': 506, 'EcovelleMix': 606}
-KZ_CITIES = ["Астана", "Нур-Султан", "Алматы", "Шымкент", "Караганда", "Актобе", "Тараз",
-             "Павлодар", "Усть-Каменогорск", "Семей", "Атырау", "Костанай", "Кызылорда",
-             "Уральск", "Петропавловск", "Актау", "Темиртау", "Туркестан", "Кокшетау",
-             "Талдыкорган", "Экибастуз", "Рудный", "Жанаозен", "Балхаш", "Сатпаев",
-             "Кентау", "Каскелен", "Степногорск", "Щучинск", "Риддер", "Жезказган",
-             "Аксай", "Кульсары", "Байконур", "Талгар", "Есик", "Конаев", "Капшагай",
-             "Сарань", "Шахтинск", "Житикара", "Аркалык", "Лисаковск", "Алтай", "Текели",
-             "Хромтау", "Аягоз", "Каратау", "Шу", "Ленгер", "Сарыагаш", "Жетысай", "Арыс",
-             "Абай", "Курчатов", "Атбасар", "Макинск", "Ерейментау", "Тайынша", "Булаево",
-             "Шемонаиха", "Зайсан", "Аральск", "Казалинск", "Форт-Шевченко", "Эмба",
-             "Шалкар", "Державинск", "Сергеевка", "Мамлютка", "Приозерск", "Косшы"]
+now = dt.datetime.now(ZoneInfo('Europe/Moscow'))
+today = now.date()
+WB_TOKEN = ''
+OZ_ID = OZ_KEY = ''
 
 
 def W(name, obj):
-    json.dump(obj, open(os.path.join(HERE, name), 'w', encoding='utf-8'), ensure_ascii=False)
-    log(f'  -> {name}')
+    # Ancillary snapshots are encrypted with the rest of the history; no raw files needed.
+    log(f'  собран {name}')
 
 
-# ================================================================ OZON
-def ozon():
-    H = {'Client-Id': OZ_ID, 'Api-Key': OZ_KEY, 'Content-Type': 'application/json'}
-    post = lambda p, b: req('https://api-seller.ozon.ru' + p, 'POST', H, b)
-    since, to = m0.isoformat() + 'T00:00:00Z', TO + 'T00:00:00Z'
-
-    fbo, off = [], 0
-    while True:
-        r = post('/v2/posting/fbo/list', {'dir': 'ASC', 'filter': {'since': since, 'to': to},
-                                          'limit': 1000, 'offset': off, 'with': {'analytics_data': True}})
-        a = (r or {}).get('result') or []
-        fbo += a
-        if len(a) < 1000:
-            break
-        off += 1000
-        time.sleep(1.2)
-    time.sleep(1.2)
-    fbs, off = [], 0
-    while True:
-        r = (post('/v3/posting/fbs/list', {'dir': 'ASC', 'filter': {'since': since, 'to': to},
-                                           'limit': 1000, 'offset': off,
-                                           'with': {'analytics_data': True}}) or {}).get('result') or {}
-        fbs += r.get('postings') or []
-        if not r.get('has_next'):
-            break
-        off += 1000
-        time.sleep(1.2)
-    log(f'  Ozon постинги: FBO {len(fbo)}, FBS {len(fbs)}')
-
-    rows = []
-    for p in fbo:
-        its = [x for x in (p.get('products') or []) if x.get('offer_id') in PADS]
-        if its:
-            ad = p.get('analytics_data') or {}
-            rows.append([(p.get('created_at') or '')[:10], 'fbo', p.get('status'),
-                         [[x['offer_id'], x['quantity'], float(x['price'])] for x in its],
-                         ad.get('city') or '', ad.get('warehouse_name') or '',
-                         ad.get('delivery_type') or '', p.get('cancel_reason_id') or 0])
-    for p in fbs:
-        its = [x for x in (p.get('products') or []) if x.get('offer_id') in PADS]
-        if its:
-            ad = p.get('analytics_data') or {}
-            rows.append([(p.get('in_process_at') or '')[:10], 'fbs', p.get('status'),
-                         [[x['offer_id'], x['quantity'], float(x['price'])] for x in its],
-                         ad.get('city') or '', ad.get('warehouse') or '',
-                         ad.get('delivery_type') or '',
-                         (p.get('cancellation') or {}).get('cancel_reason') or ''])
-
-    daily, geo, cancels, month, whs, dtype, stat = {}, {}, {}, {}, {}, {}, {}
-    transit = {'fbo': {'postings': 0, 'units': 0, 'sum': 0}, 'fbs': {'postings': 0, 'units': 0, 'sum': 0}}
-    for d, sch, st, items, city, wh, dty, cr in rows:
-        q = sum(i[1] for i in items)
-        s = sum(i[1] * i[2] for i in items)
-        m = d[:7]
-        stat[st] = stat.get(st, 0) + 1
-        M = month.setdefault(m, {'ordered': 0, 'rev': 0, 'canc': 0, 'cancRev': 0,
-                                 'deliveredStatus': 0, 'transit': 0, 'fbo': 0, 'fbs': 0, 'postings': 0})
-        M['postings'] += 1
-        if st == 'cancelled':
-            M['canc'] += q
-            M['cancRev'] += s
-            key = f'Отмена FBO (код Ozon {cr})' if sch == 'fbo' else (cr or 'без причины')
-            cancels[key] = cancels.get(key, 0) + q
-            continue
-        M['ordered'] += q
-        M['rev'] += s
-        M[sch] += q
-        if st == 'delivered':
-            M['deliveredStatus'] += q
-        else:
-            M['transit'] += q
-            transit[sch]['postings'] += 1
-            transit[sch]['units'] += q
-            transit[sch]['sum'] += s
-        if d >= since30:
-            for o, qq, pr in items:
-                k = d + '|' + o
-                row = daily.setdefault(k, [d, o, 0, 0, 0, 0, 0])
-                row[2] += qq
-                row[3] += qq * pr
-                row[4 if sch == 'fbo' else 5] += qq
-                if st == 'delivered':
-                    row[6] += qq
-        c = city or '(город не указан)'
-        g = geo.setdefault(c, {'q': 0, 'fbo': 0, 'fbs': 0})
-        g['q'] += q
-        g[sch] += q
-        if sch == 'fbo':
-            whs[wh] = whs.get(wh, 0) + q
-        dtype[dty or '?'] = dtype.get(dty or '?', 0) + q
-
-    # ФИНАНСЫ. /v3/finance/transaction/list отключён Ozon 13 сен 2026 (code 9, obsolete method),
-    # замены с теми же полями в API нет (проверены v1/v2/v4 list, totals, realization, analytics delivered_units).
-    # Поэтому: выкупы — по статусу постингов, денежный ориентир — cash-flow-statement (по всему кабинету).
-    deliv, other = {}, {}
-    fin = {m: {'acc': 0, 'comm': 0, 'log': 0, 'amt': 0, 'n': M['deliveredStatus']} for m, M in month.items()}
-    cash = {}
-    try:
-        time.sleep(1.2)
-        cf = post('/v1/finance/cash-flow-statement/list',
-                  {'date': {'from': m0.isoformat() + 'T00:00:00.000Z',
-                            'to': today.isoformat() + 'T23:59:59.999Z'},
-                   'page': 1, 'page_size': 100, 'with_details': False}) or {}
-        for c in ((cf.get('result') or {}).get('cash_flows') or []):
-            m = (c.get('period') or {}).get('begin', '')[:7]
-            x = cash.setdefault(m, {'orders': 0, 'returns': 0, 'comm': 0, 'serv': 0, 'deliv': 0})
-            x['orders'] += c.get('orders_amount', 0)
-            x['returns'] += c.get('returns_amount', 0)
-            x['comm'] += c.get('commission_amount', 0)
-            x['serv'] += c.get('services_amount', 0)
-            x['deliv'] += c.get('item_delivery_and_return_amount', 0)
-        log(f'  Ozon cash-flow по месяцам: {list(cash)}')
-    except Exception as e:
-        log(f'  !! Ozon cash-flow не собран: {e}')
-
-    time.sleep(1.2)
-    stock = (post('/v2/analytics/stock_on_warehouses',
-                  {'limit': 100, 'offset': 0, 'warehouse_type': 'ALL'}) or {}).get('result') or {}
-    time.sleep(1.2)
-    act = req('https://api-seller.ozon.ru/v1/actions', 'GET',
-              {'Client-Id': OZ_ID, 'Api-Key': OZ_KEY}) or {}
-
-    W('oz_raw.json', {
-        'since': since30,
-        'daily': sorted(daily.values()),
-        'deliv': {d: v for d, v in deliv.items() if d >= since30},
-        'fin': fin, 'other': other, 'month': month, 'transit': transit, 'cancels': cancels,
-        'geo': sorted(geo.items(), key=lambda kv: -kv[1]['q'])[:40],
-        'kzCities': KZ_CITIES, 'whs': whs, 'dtype': dtype, 'stat': stat,
-        'cash': cash,
-        'financeApiDown': 'Ozon отключил /v3/finance/transaction/list (code 9, obsolete method) — выплаты и выкупы по дням недоступны',
-        'stock': [{'o': r['item_code'], 'wh': r['warehouse_name'], 'free': r['free_to_sell_amount'],
-                   'promised': r['promised_amount'], 'reserved': r['reserved_amount']}
-                  for r in (stock.get('rows') or []) if r.get('item_code') in PADS],
-        'actions': [{'id': a['id'], 'title': (a.get('title') or '').strip(),
-                     'from': a['date_start'][:10], 'to': a['date_end'][:10],
-                     'part': a.get('is_participating'), 'pot': a.get('potential_products_count')}
-                    for a in (act.get('result') or [])],
-    })
-    return month
-
-
-# ================================================================ WB
 def wb_get(host, path):
-    return req(f'https://{host}{path}', 'GET', {'Authorization': WB_TOKEN, 'Content-Type': 'application/json'})
+    return req(f'https://{host}{path}', headers={'Authorization': WB_TOKEN, 'Content-Type': 'application/json'})
 
 
-def wb_stats():
-    """orders + sales за период; между ними обязательная пауза 65 с (лимит 1 запрос/мин)."""
-    since = m0.isoformat()
-    O = wb_get('statistics-api.wildberries.ru',
-               f'/api/v1/supplier/orders?dateFrom={since}T00:00:00&flag=0') or []
-    log(f'  WB orders: {len(O)} (пауза 65 с перед sales)')
-    time.sleep(65)
-    S = wb_get('statistics-api.wildberries.ru',
-               f'/api/v1/supplier/sales?dateFrom={since}T00:00:00&flag=0') or []
-    log(f'  WB sales: {len(S)}')
+def oz_post(path, body):
+    return req('https://api-seller.ozon.ru' + path, 'POST',
+               {'Client-Id': OZ_ID, 'Api-Key': OZ_KEY, 'Content-Type': 'application/json'}, body)
 
-    PA = set(WB_ART)
-    daily, sales, month, countries, regions, last = {}, {}, {}, {}, {}, {}
-    for r in O:
-        if r.get('supplierArticle') not in PA:
-            continue
-        d = (r.get('date') or '')[:10]
-        if d < since:
-            continue
-        a = r['supplierArticle']
-        k = d + '|' + a
-        row = daily.setdefault(k, [d, a, 0, 0, 0])
-        M = month.setdefault(d[:7], {'ordered': 0, 'rev': 0, 'canc': 0, 'cancRev': 0, 'buy': 0, 'pay': 0})
-        if r.get('isCancel'):
-            row[4] += 1
-            M['canc'] += 1
-            M['cancRev'] += round(r.get('priceWithDisc') or 0)
-        else:
-            row[2] += 1
-            row[3] += round(r.get('priceWithDisc') or 0)
-            M['ordered'] += 1
-            M['rev'] += round(r.get('priceWithDisc') or 0)
-            countries[r.get('countryName') or '?'] = countries.get(r.get('countryName') or '?', 0) + 1
-            reg = r.get('regionName') or r.get('oblastOkrugName') or '?'
-            regions[reg] = regions.get(reg, 0) + 1
-            if a not in last or d > last[a]:
-                last[a] = d
-    sold_srid = set()
-    for r in S:
-        if r.get('supplierArticle') not in PA:
-            continue
-        d = (r.get('date') or '')[:10]
-        if d < since:
-            continue
-        a = r['supplierArticle']
-        sold_srid.add(r.get('srid'))
-        k = d + '|' + a
-        row = sales.setdefault(k, [d, a, 0, 0, 0])
-        row[2] += 1
-        row[3] += round(r.get('forPay') or 0)
-        row[4] += round(r.get('priceWithDisc') or 0)
-        M = month.setdefault(d[:7], {'ordered': 0, 'rev': 0, 'canc': 0, 'cancRev': 0, 'buy': 0, 'pay': 0})
-        M['buy'] += 1
-        M['pay'] += round(r.get('forPay') or 0)
-    # «в пути»: заказ не отменён и его srid ещё не встречался в выкупах
-    tr = {'n': 0, 'sum': 0, 'byArt': {}}
-    for r in O:
-        if r.get('supplierArticle') not in PA or r.get('isCancel'):
-            continue
-        if (r.get('date') or '')[:10] < since or r.get('srid') in sold_srid:
-            continue
-        tr['n'] += 1
-        tr['sum'] += round(r.get('priceWithDisc') or 0)
-        a = r['supplierArticle']
-        tr['byArt'][a] = tr['byArt'].get(a, 0) + 1
 
-    W('wb_raw.json', {
-        'since': since,
-        'daily': sorted(daily.values()), 'sales': sorted(sales.values()),
-        'month': month, 'transit': tr, 'lastOrder': last,
-        'countries': sorted(countries.items(), key=lambda kv: -kv[1]),
-        'regions': sorted(regions.items(), key=lambda kv: -kv[1])[:20],
-    })
-    return month
+def month_shift(day, months):
+    import calendar
+    index = day.year * 12 + day.month - 1 + months
+    year, month = divmod(index, 12)
+    return day.replace(year=year, month=month+1, day=min(day.day, calendar.monthrange(year, month+1)[1]))
+
+
+def oz_orders(state):
+    # Monthly windows avoid API range limits. Refresh recent statuses; keep older records.
+    first = month_shift(today, -int(os.environ.get('HISTORY_MONTHS', '24')))
+    start = first if not state['coverage']['oz'] else max(first, today - dt.timedelta(days=89))
+    end = today + dt.timedelta(days=1)
+    pending = {}
+    left = start
+    while left < end:
+        right = min(month_shift(left.replace(day=1), 1), end)
+        since = dt.datetime.combine(left, dt.time(), ZoneInfo('Europe/Moscow')).astimezone(dt.timezone.utc).isoformat()
+        to = (dt.datetime.combine(right, dt.time(), ZoneInfo('Europe/Moscow')).astimezone(dt.timezone.utc) - dt.timedelta(milliseconds=1)).isoformat()
+        for scheme, path in [('fbo', '/v2/posting/fbo/list'), ('fbs', '/v3/posting/fbs/list')]:
+            offset = 0
+            seen = set()
+            while True:
+                response = oz_post(path, {'dir': 'ASC', 'filter': {'since': since, 'to': to},
+                                         'limit': 1000, 'offset': offset, 'with': {'analytics_data': True}})
+                if not isinstance(response, dict) or 'result' not in response:
+                    raise RuntimeError('Ozon: изменился формат ' + path)
+                result = response['result']
+                if scheme == 'fbs' and (not isinstance(result, dict) or not isinstance(result.get('has_next'), bool)):
+                    raise RuntimeError('Ozon: нет признака завершения пагинации FBS')
+                rows = result if scheme == 'fbo' else result.get('postings')
+                if not isinstance(rows, list):
+                    raise RuntimeError('Ozon: нет списка отправлений ' + path)
+                page_ids = {r.get('posting_number') for r in rows}
+                if rows and page_ids <= seen:
+                    raise RuntimeError('Ozon: пагинация повторила страницу')
+                seen |= page_ids
+                for record in rows:
+                    normalized = normalize_oz(record, scheme)
+                    if normalized:
+                        pending[normalized[0]] = normalized[1]
+                more = len(rows) == 1000 if scheme == 'fbo' else result.get('has_next')
+                if not more:
+                    break
+                if not rows or offset + 1000 >= 20000:
+                    raise RuntimeError('Ozon: окно слишком большое для пагинации; данные не опубликованы как полные')
+                offset += 1000
+        left = right
+    state['oz'].update(pending)
+    state['coverage']['oz'] = add_coverage(state['coverage']['oz'], start.isoformat(), (today-dt.timedelta(days=1)).isoformat())
+    state['updated']['oz'] = now.isoformat()
+    log(f'Ozon: {len(pending)} отправлений обновлено')
+
+
+def wb_pages(kind, since):
+    cursor = since + 'T00:00:00'
+    output = {}
+    for _ in range(200):
+        rows = wb_get('statistics-api.wildberries.ru',
+                      f'/api/v1/supplier/{kind}?dateFrom={urllib.parse.quote(cursor)}&flag=0')
+        if not isinstance(rows, list):
+            raise RuntimeError('WB: изменился формат ' + kind)
+        if not rows:
+            return output
+        for record in rows:
+            normalized = normalize_wb(record, kind)
+            if normalized:
+                ident, value = normalized
+                if ident not in output or value['changed'] >= output[ident]['changed']:
+                    output[ident] = value
+        # WB explicitly requires advancing lastChangeDate until an empty page, regardless of page size.
+        next_cursor = rows[-1].get('lastChangeDate')
+        if not next_cursor or next_cursor <= cursor:
+            raise RuntimeError('WB: курсор не продвигается; возможно, данные неполные')
+        cursor = next_cursor
+    raise RuntimeError('WB: слишком много страниц')
+
+
+def wb_orders_sales(state):
+    earliest = today - dt.timedelta(days=89)
+    previous = state['updated'].get('wb')
+    start = max(earliest, dt.date.fromisoformat(previous[:10]) - dt.timedelta(days=7)) if previous else earliest
+    orders = wb_pages('orders', start.isoformat())
+    sales = wb_pages('sales', start.isoformat())
+    # Both feeds must complete before declaring coverage. Identity upserts prevent duplicates.
+    state['wb_orders'].update(orders)
+    state['wb_sales'].update(sales)
+    state['coverage']['wb'] = add_coverage(state['coverage']['wb'], start.isoformat(), (today-dt.timedelta(days=1)).isoformat())
+    state['updated']['wb'] = now.isoformat()
+    log(f'WB: {len(orders)} заказов, {len(sales)} продаж/возвратов обновлено')
+
+
+def oz_stock():
+    output, offset = [], 0
+    while True:
+        response = oz_post('/v2/analytics/stock_on_warehouses', {'limit': 1000, 'offset': offset, 'warehouse_type': 'ALL'})
+        rows = response.get('result', {}).get('rows')
+        if not isinstance(rows, list):
+            raise RuntimeError('Ozon: нет строк остатков')
+        output.extend({'sku': r['item_code'], 'warehouse': r['warehouse_name'],
+                       'free': r['free_to_sell_amount'], 'promised': r.get('promised_amount', 0),
+                       'reserved': r.get('reserved_amount', 0)} for r in rows if r.get('item_code') in OZ_ART)
+        if len(rows) < 1000:
+            return output
+        offset += 1000
+        if offset >= 20000:
+            raise RuntimeError('Ozon: остатки превышают лимит пагинации')
+
+
+def oz_actions():
+    response = req('https://api-seller.ozon.ru/v1/actions', headers={'Client-Id': OZ_ID, 'Api-Key': OZ_KEY})
+    rows = response.get('result')
+    if not isinstance(rows, list):
+        raise RuntimeError('Ozon: нет списка акций')
+    return rows
 
 
 def wb_stock():
@@ -326,8 +216,12 @@ def wb_stock():
                     f'/api/v1/warehouse_remains/tasks/{task}/status') or {}
         if ((st.get('data') or {}).get('status') or '') == 'done':
             break
+    else:
+        raise RuntimeError('WB: отчёт остатков не готов за отведённое время')
     d = wb_get('seller-analytics-api.wildberries.ru',
-               f'/api/v1/warehouse_remains/tasks/{task}/download') or []
+               f'/api/v1/warehouse_remains/tasks/{task}/download')
+    if not isinstance(d, list):
+        raise RuntimeError('WB: изменился формат отчёта остатков')
     out = {}
     for r in d:
         if r.get('vendorCode') not in WB_ART:
@@ -336,9 +230,12 @@ def wb_stock():
                             if w.get('warehouseName') == n), 0)
         wh = {w['warehouseName']: w['quantity'] for w in (r.get('warehouses') or [])
               if not w['warehouseName'].startswith('В пути') and w['warehouseName'] != 'Всего находится на складах'}
-        out[r['vendorCode']] = {'toClient': g('В пути до получателей'),
-                                'returning': g('В пути возвраты на склад WB'),
-                                'total': g('Всего находится на складах'), 'wh': wh}
+        existing = out.setdefault(r['vendorCode'], {'toClient': 0, 'returning': 0, 'total': 0, 'wh': {}})
+        existing['toClient'] += g('В пути до получателей')
+        existing['returning'] += g('В пути возвраты на склад WB')
+        existing['total'] += g('Всего находится на складах')
+        for name, count in wh.items():
+            existing['wh'][name] = existing['wh'].get(name, 0) + count
     W('wb_stock.json', out)
     return out
 
@@ -348,7 +245,9 @@ def wb_prices():
     for nm, art in WB_NM.items():
         d = wb_get('discounts-prices-api.wildberries.ru',
                    f'/api/v2/list/goods/filter?limit=10&filterNmID={nm}') or {}
-        goods = (d.get('data') or {}).get('listGoods') or []
+        goods = (d.get('data') or {}).get('listGoods')
+        if not isinstance(goods, list):
+            raise RuntimeError('WB: изменился формат цен')
         if not goods:
             continue
         g = goods[0]
@@ -378,6 +277,8 @@ def wb_feedback(full=True):
     cu = wb_get('feedbacks-api.wildberries.ru', '/api/v1/feedbacks/count-unanswered') or {}
     qu = wb_get('feedbacks-api.wildberries.ru', '/api/v1/questions/count-unanswered') or {}
     cd, qd = cu.get('data') or {}, qu.get('data') or {}
+    if 'countUnanswered' not in cd or 'countUnanswered' not in qd:
+        raise RuntimeError('WB: изменился формат счётчиков отзывов/вопросов')
     out = {'unansweredTotal': cd.get('countUnanswered', 0),
            'unansweredToday': cd.get('countUnansweredToday', 0),
            'questionsUnanswered': qd.get('countUnanswered', 0)}
@@ -386,7 +287,10 @@ def wb_feedback(full=True):
         for q in ('isAnswered=false&take=100&skip=0&order=dateDesc',
                   'isAnswered=true&take=200&skip=0&order=dateDesc'):
             r = wb_get('feedbacks-api.wildberries.ru', f'/api/v1/feedbacks?{q}') or {}
-            fbs += (r.get('data') or {}).get('feedbacks') or []
+            rows = (r.get('data') or {}).get('feedbacks')
+            if not isinstance(rows, list):
+                raise RuntimeError('WB: изменился формат отзывов')
+            fbs += rows
             time.sleep(0.6)
     cut = (today - dt.timedelta(days=30)).isoformat()
     dist, byArt, low, texts, n, ssum = {}, {}, [], [], 0, 0
@@ -412,9 +316,13 @@ def wb_feedback(full=True):
         if c:
             th.append([name, c])
     th.sort(key=lambda x: -x[1])
+    out['sample'] = True
+    out['sampleLimit'] = 300
+    out['periodStart'] = cut
+    out['periodEnd'] = today.isoformat()
     out['sinceAug7'] = {'n': n, 'dist': dist, 'avg': (ssum / n) if n else 0, 'byArt': byArt}
     out['lowRecent'] = sorted(low, key=lambda r: r['d'], reverse=True)[:12]
-    out['themes'] = th[:6]      # черновик — агент переписывает по текстам lowRecent
+    out['themes'] = th[:6]
     W('wb_feedback.json', out)
     return out
 
@@ -422,47 +330,57 @@ def wb_feedback(full=True):
 def wb_promos():
     a = today.isoformat() + 'T00:00:00Z'
     b = (today + dt.timedelta(days=45)).isoformat() + 'T00:00:00Z'
-    d = wb_get('dp-calendar-api.wildberries.ru',
-               f'/api/v1/calendar/promotions?startDateTime={a}&endDateTime={b}'
-               f'&allPromo=true&limit=50&offset=0') or {}
-    pr = [{'id': p.get('id'), 'name': p.get('name'), 'start': (p.get('startDateTime') or '')[:10],
-           'end': (p.get('endDateTime') or '')[:10], 'type': p.get('type')}
-          for p in ((d.get('data') or {}).get('promotions') or [])]
-    W('wb_promos.json', pr)
-    return pr
+    output = []
+    for offset in range(0, 10000, 50):
+        response = wb_get('dp-calendar-api.wildberries.ru',
+                          f'/api/v1/calendar/promotions?startDateTime={a}&endDateTime={b}'
+                          f'&allPromo=true&limit=50&offset={offset}')
+        rows = (response.get('data') or {}).get('promotions')
+        if not isinstance(rows, list):
+            raise RuntimeError('WB: изменился формат акций')
+        output.extend({'id': p.get('id'), 'name': p.get('name'),
+                       'start': (p.get('startDateTime') or '')[:10],
+                       'end': (p.get('endDateTime') or '')[:10], 'type': p.get('type')} for p in rows)
+        if len(rows) < 50:
+            return output
+    raise RuntimeError('WB: список акций превышает лимит пагинации')
 
 
-# ================================================================ run
-def safe(name, fn, *a):
-    try:
-        log(f'-- {name}')
-        return fn(*a)
-    except Exception as e:
-        ERRORS.append(f'{name}: {e}')
-        log(f'!! {name} упал: {e}')
-        return None
+def main():
+    global today, now, WB_TOKEN, OZ_ID, OZ_KEY
+    now = dt.datetime.now(ZoneInfo('Europe/Moscow'))
+    today = dt.date.fromisoformat(sys.argv[1]) if len(sys.argv) > 1 else now.date()
+    password = env('PAGE_PASS')
+    state = read_history(password)  # A wrong password must never erase accumulated history.
+    OZ_ID, OZ_KEY, WB_TOKEN = env('OZON_CLIENT_ID'), env('OZON_API_KEY'), env('WB_TOKEN')
+    status = {}
+    core_success = 0
+    for name, function in [('oz', oz_orders), ('wb', wb_orders_sales)]:
+        try:
+            function(state)
+            status[name] = {'ok': True}
+            core_success += 1
+        except Exception as exc:
+            status[name] = {'ok': False, 'error': str(exc)}
+            log(f'!! {name}: {exc}')
+    for name, function in [('oz_stock', oz_stock), ('oz_actions', oz_actions), ('wb_stock', wb_stock),
+                           ('wb_prices', wb_prices), ('wb_feedback', wb_feedback), ('wb_promos', wb_promos)]:
+        try:
+            data = function()
+            state['snapshots'][name] = {'asOf': now.isoformat(), 'data': data}
+            status[name] = {'ok': True}
+        except Exception as exc:
+            status[name] = {'ok': False, 'error': str(exc)}
+            log(f'!! {name}: {exc}')
+    if not core_success:
+        raise RuntimeError('Оба источника заказов недоступны; сохраняем опубликованную страницу и историю')
+    state['run'] = {'generated': now.isoformat(timespec='seconds'), 'today': today.isoformat(), 'status': status}
+    write_history(state, password)
+    failures = [name for name, value in status.items() if not value['ok']]
+    if failures:
+        log('::warning::Источники с ошибками: ' + ', '.join(failures))
+    log('Зашифрованная история сохранена')
 
 
-ozm = safe('Ozon', ozon)
-wbm = safe('WB orders/sales', wb_stats)
-ws = safe('WB остатки', wb_stock)
-safe('WB цены', wb_prices)
-safe('WB отзывы', wb_feedback)
-safe('WB акции', wb_promos)
-
-cm, pm = today.strftime('%Y-%m'), m0.strftime('%Y-%m')
-log('\n== ИТОГ')
-if ozm:
-    log(f'  Ozon {cm}: заказано {ozm.get(cm, {}).get("ordered", 0)} шт / '
-        f'{ozm.get(cm, {}).get("rev", 0):.0f} ₸, отмен {ozm.get(cm, {}).get("canc", 0)}')
-if wbm:
-    log(f'  WB   {cm}: заказано {wbm.get(cm, {}).get("ordered", 0)} шт, '
-        f'выкуплено {wbm.get(cm, {}).get("buy", 0)}, отмен {wbm.get(cm, {}).get("canc", 0)}')
-if ws:
-    log(f'  WB склады: свободно {sum(v["total"] for v in ws.values())}, '
-        f'возвраты в пути {sum(v["returning"] for v in ws.values())}')
-if ERRORS:
-    log('  НЕ СОБРАНО: ' + '; '.join(ERRORS))
-    log('  (сводку собрать всё равно, отметив недостающий источник)')
-else:
-    log('  все источники собраны')
+if __name__ == '__main__':
+    main()

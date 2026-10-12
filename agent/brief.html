@@ -1,353 +1,98 @@
-<title>Утро Ecovelle</title>
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Утро · Ecovelle</title>
 <style>
-:root{color-scheme:light;
-  --bg:#f3f5f8;--surface:#ffffff;--surface-2:#eef1f5;--line:#dfe4ea;--grid:#e6eaf0;
-  --ink:#0f1720;--ink-2:#4b5563;--muted:#7b8794;
-  --oz:#2a78d6;--oz-soft:#e3edfa;--oz-deep:#1c5cab;--wb:#eb6834;--wb-soft:#fdeae1;--wb-deep:#b8461d;
-  --neutral-bar:#9aa5b1;
-  --good:#0ca30c;--good-text:#0a7a0a;--warn:#f5b400;--warn-text:#8a5a00;--crit:#d03b3b;--crit-soft:#fbe6e6;--warn-soft:#fff3cf;--good-soft:#e4f5e4;
-  --shadow:0 1px 2px rgba(15,23,32,.05),0 6px 20px -12px rgba(15,23,32,.15)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;
-  --bg:#0f1216;--surface:#171b21;--surface-2:#20262e;--line:#2a313a;--grid:#262d36;
-  --ink:#f2f4f7;--ink-2:#c1c8d1;--muted:#8a94a0;--oz:#4a90e2;--oz-soft:#1a2a40;--oz-deep:#8fb8f0;--wb:#e8693a;--wb-soft:#3a2418;--wb-deep:#f0a07a;
-  --neutral-bar:#6b7683;--good-text:#4fd34f;--warn-text:#f5c65a;--crit-soft:#3a1c1c;--warn-soft:#3a3010;--good-soft:#173a17;--shadow:none}}
-:root[data-theme="dark"]{color-scheme:dark;
-  --bg:#0f1216;--surface:#171b21;--surface-2:#20262e;--line:#2a313a;--grid:#262d36;
-  --ink:#f2f4f7;--ink-2:#c1c8d1;--muted:#8a94a0;--oz:#4a90e2;--oz-soft:#1a2a40;--oz-deep:#8fb8f0;--wb:#e8693a;--wb-soft:#3a2418;--wb-deep:#f0a07a;
-  --neutral-bar:#6b7683;--good-text:#4fd34f;--warn-text:#f5c65a;--crit-soft:#3a1c1c;--warn-soft:#3a3010;--good-soft:#173a17;--shadow:none}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;-webkit-font-smoothing:antialiased}
-.wrap{max-width:1120px;margin:0 auto;padding:22px 16px 60px}
-h1{font-size:30px;font-weight:800;letter-spacing:-.02em;margin:0;line-height:1.1}
-h2{font-size:19px;font-weight:800;margin:0;letter-spacing:-.01em}
-h3{font-size:14.5px;font-weight:700;margin:0}
-.sub{color:var(--ink-2);margin:3px 0 0;font-size:14px}
-.eyebrow{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:700}
-.sec{margin-top:26px}
-.sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}
-.sec-h .hint{font-size:13px;color:var(--muted)}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:var(--shadow);min-width:0}
-.grid{display:grid;gap:14px}
-.two{grid-template-columns:1fr 1fr}
-@media (max-width:800px){.two{grid-template-columns:1fr}}
-.plat{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-.plat .logo{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-weight:900;font-size:13px;color:#fff;letter-spacing:.02em}
-.plat.oz .logo{background:var(--oz)} .plat.wb .logo{background:var(--wb)}
-.plat .t{font-weight:800;font-size:16px} .plat .s{font-size:12.5px;color:var(--muted)}
-.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-@media (min-width:560px){.tiles{grid-template-columns:repeat(4,1fr)}}
-.tile{background:var(--surface-2);border-radius:12px;padding:12px 12px 10px;min-width:0}
-.tile .l{font-size:12px;color:var(--ink-2);font-weight:600;display:flex;align-items:center;gap:6px}
-.tile .v{font-size:30px;font-weight:800;letter-spacing:-.03em;line-height:1.05;margin-top:4px;font-variant-numeric:tabular-nums}
-.tile .v small{font-size:13px;font-weight:600;color:var(--muted);margin-left:3px;letter-spacing:0}
-.tile .d{font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.35}
-.tile.big .v{font-size:38px}
-.up{color:var(--good-text);font-weight:700} .down{color:var(--crit);font-weight:700} .flat{color:var(--muted);font-weight:700}
-.q{display:inline-grid;place-items:center;width:15px;height:15px;border-radius:50%;background:var(--line);color:var(--ink-2);font-size:10px;font-weight:800;cursor:help;flex:none}
-.hero{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:var(--shadow)}
-.hero p{margin:8px 0 0;font-size:16px;line-height:1.5;color:var(--ink-2)}
-.hero p b{color:var(--ink)}
-.stamp{display:inline-flex;gap:8px;align-items:center;font-size:12.5px;color:var(--ink-2);background:var(--surface-2);padding:6px 10px;border-radius:999px;margin-top:10px}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--good)}
-table{width:100%;border-collapse:collapse;font-size:14px}
-th{text-align:left;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:700;padding:8px 10px;border-bottom:1px solid var(--line)}
-td{padding:10px;border-bottom:1px solid var(--line);vertical-align:middle}
-tr:last-child td{border-bottom:0}
-td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-td.big{font-size:17px;font-weight:800}
-.tbl-wrap{overflow-x:auto}
-.mtab th:first-child,.mtab td:first-child{color:var(--ink-2);font-weight:600}
-.mtab td .delta{display:block;font-size:12px;font-weight:600;margin-top:1px}
-.mtab tbody tr td:nth-child(2){font-weight:800}
-.chart-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-2);margin-top:8px}
-.chart-legend span{display:inline-flex;align-items:center;gap:6px}
-.sw{width:11px;height:11px;border-radius:3px;display:inline-block}
-svg{display:block;width:100%;height:auto;overflow:visible}
-.ax{fill:var(--muted);font-size:11px}
-.gl{stroke:var(--grid)}
-.bars{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(70px,2fr) auto;gap:7px 10px;align-items:center;font-size:13.5px}
-.bars .trk{height:10px;background:var(--surface-2);border-radius:5px;position:relative;overflow:hidden}
-.bars .trk i{position:absolute;left:0;top:0;bottom:0;border-radius:5px}
-.bars .n{font-variant-numeric:tabular-nums;color:var(--ink-2);font-size:13px;white-space:nowrap}
-.bars .lbl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.split{display:flex;height:14px;border-radius:7px;overflow:hidden;gap:2px;margin:10px 0 6px}
-.split i{display:block}
-.split-l{display:flex;justify-content:space-between;font-size:13px;color:var(--ink-2)}
-.pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap}
-.pill.ok{color:var(--good-text);background:var(--good-soft)} .pill.warn{color:var(--warn-text);background:var(--warn-soft)} .pill.crit{color:var(--crit);background:var(--crit-soft)} .pill.mute{color:var(--ink-2);background:var(--surface-2)}
-.att{display:flex;flex-direction:column;gap:10px}
-.a{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;padding:14px;border-radius:14px;border:1px solid var(--line);background:var(--surface)}
-.a .n{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;font-weight:800;font-size:13px;color:#fff}
-.a.crit .n{background:var(--crit)} .a.warn .n{background:var(--warn);color:#3a2a00} .a.info .n{background:var(--oz)} .a.good .n{background:var(--good)}
-.a h3 span{font-weight:600;color:var(--muted);font-size:12px;margin-left:8px}
-.a p{margin:4px 0 0;font-size:14px;color:var(--ink-2)}
-.a p b{color:var(--ink);font-weight:700}
-.a .act{margin-top:8px;font-size:14px;color:var(--ink);font-weight:600;padding:8px 10px;background:var(--surface-2);border-radius:8px}
-.a .act::before{content:"Что сделать: ";color:var(--muted);font-weight:700}
-.whs{font-size:12.5px;color:var(--muted);margin-top:2px}
-.rev{border-left:3px solid var(--line);padding:6px 12px;margin-top:10px;font-size:13.5px}
-.rev.low{border-color:var(--crit)}
-.rev .m{color:var(--muted);font-size:12px}
-.themes{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
-.themes span{font-size:12.5px;background:var(--surface-2);border-radius:6px;padding:4px 9px;color:var(--ink-2)}
-.themes span b{color:var(--ink)}
-.promo{display:grid;grid-template-columns:auto 1fr auto;gap:8px 12px;align-items:center;font-size:14px;padding:9px 0;border-bottom:1px dashed var(--line)}
-.promo:last-child{border-bottom:0}
-.promo .when{font-variant-numeric:tabular-nums;color:var(--ink-2);font-size:13px;white-space:nowrap}
-.tag{display:inline-flex;align-items:center;font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:6px}
-.tag.oz{background:var(--oz-soft);color:var(--oz-deep)} .tag.wb{background:var(--wb-soft);color:var(--wb-deep)}
-.note{font-size:13px;color:var(--ink-2);margin-top:10px;line-height:1.5}
-.gloss{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px 18px;font-size:13.5px;color:var(--ink-2)}
-.gloss b{color:var(--ink)}
-footer{margin-top:28px;font-size:12.5px;color:var(--muted);line-height:1.6}
-.tt{position:fixed;pointer-events:none;background:var(--ink);color:var(--bg);font-size:12.5px;padding:7px 10px;border-radius:8px;opacity:0;transition:opacity .12s;z-index:10;line-height:1.4;max-width:260px}
-</style>
-
-<div class="wrap">
-<section class="hero">
-  <div class="eyebrow">Ежедневная сводка · Ozon + Wildberries · прокладки Ecovelle</div>
-  <h1 id="h1">Утро</h1>
-  <p id="lead"></p>
-  <div class="stamp"><span class="dot"></span>Данные площадок на <b id="stamp"></b></div>
-</section>
-
-<section class="sec">
-  <div class="sec-h"><h2>Вчера</h2><span class="hint" id="ydate"></span></div>
-  <div class="grid two">
-    <div class="card"><div class="plat oz"><div class="logo">OZ</div><div><div class="t">Ozon</div><div class="s">Казахстан → Россия · в тенге</div></div></div><div class="tiles" id="ozY"></div></div>
-    <div class="card"><div class="plat wb"><div class="logo">WB</div><div><div class="t">Wildberries</div><div class="s">Россия, Казахстан, СНГ · в рублях</div></div></div><div class="tiles" id="wbY"></div></div>
-  </div>
-</section>
-
-<section class="sec">
-  <div class="sec-h"><h2>В пути сейчас</h2><span class="hint">Заказано, но покупатель ещё не получил — деньги придут после вручения</span></div>
-  <div class="grid two">
-    <div class="card"><div class="plat oz"><div class="logo">OZ</div><div><div class="t">Ozon</div><div class="s">по схемам доставки</div></div></div><div class="tiles" id="ozTransit"></div><div id="ozTransitSplit"></div></div>
-    <div class="card"><div class="plat wb"><div class="logo">WB</div><div><div class="t">Wildberries</div><div class="s">к покупателям и обратно на склады</div></div></div><div class="tiles" id="wbTransit"></div><p class="note" id="wbTransitNote"></p></div>
-  </div>
-</section>
-
-<section class="sec">
-  <div class="sec-h"><h2 id="mTitle">Месяц</h2><span class="hint" id="mHint"></span></div>
-  <div class="grid two">
-    <div class="card"><div class="plat oz"><div class="logo">OZ</div><div><div class="t">Ozon</div><div class="s">тенге</div></div></div><div class="tbl-wrap"><table class="mtab" id="ozM"></table></div></div>
-    <div class="card"><div class="plat wb"><div class="logo">WB</div><div><div class="t">Wildberries</div><div class="s">рубли</div></div></div><div class="tbl-wrap"><table class="mtab" id="wbM"></table></div><p class="note" id="wbMNote"></p></div>
-  </div>
-</section>
-
-<section class="sec">
-  <div class="sec-h"><h2>Заказано и выкуплено по дням</h2><span class="hint">Последние 30 дней. Столбик — заказано, тёмная полоска — выкуплено (доставлено) в этот день</span></div>
-  <div class="grid two">
-    <div class="card"><div class="plat oz"><div class="logo">OZ</div><div><div class="t">Ozon</div><div class="s">упаковок в день</div></div></div><div id="ozChart"></div><div class="chart-legend"><span><i class="sw" style="background:var(--oz)"></i>Заказано</span><span><i class="sw" style="background:var(--ink)"></i>Выкуплено (доставлено)</span></div></div>
-    <div class="card"><div class="plat wb"><div class="logo">WB</div><div><div class="t">Wildberries</div><div class="s">упаковок в день</div></div></div><div id="wbChart"></div><div class="chart-legend"><span><i class="sw" style="background:var(--wb)"></i>Заказано</span><span><i class="sw" style="background:var(--ink)"></i>Выкуплено</span></div></div>
-  </div>
-</section>
-
-<section class="sec">
-  <div class="sec-h"><h2>Куда едут заказы</h2><span class="hint">За период с 1 августа, упаковок</span></div>
-  <div class="grid two">
-    <div class="card"><div class="plat oz"><div class="logo">OZ</div><div><div class="t">Ozon</div><div class="s">города покупателей</div></div></div><div id="ozGeo"></div></div>
-    <div class="card"><div class="plat wb"><div class="logo">WB</div><div><div class="t">Wildberries</div><div class="s">страны и регионы</div></div></div><div id="wbGeo"></div></div>
-  </div>
-</section>
-
-<section class="sec">
-  <div class="sec-h"><h2>Отмены и отказы</h2><span class="hint">Сколько заказов не превратились в деньги и почему</span></div>
-  <div class="grid two">
-    <div class="card"><div class="plat oz"><div class="logo">OZ</div><div><div class="t">Ozon</div></div></div><div id="ozCanc"></div></div>
-    <div class="card"><div class="plat wb"><div class="logo">WB</div><div><div class="t">Wildberries</div></div></div><div id="wbCanc"></div></div>
-  </div>
-</section>
-
-<section class="sec">
-  <div class="sec-h"><h2>Требует внимания</h2><span class="hint">По убыванию важности</span></div>
-  <div class="att" id="att"></div>
-</section>
-
-<section class="sec">
-  <div class="sec-h"><h2>Остатки на складах</h2><span class="hint">И на сколько дней их хватит при текущем темпе</span></div>
-  <div class="card"><div class="tbl-wrap"><table id="stockTbl"></table></div><p class="note" id="stockNote"></p></div>
-</section>
-
-<section class="sec">
-  <div class="grid two">
-    <div class="card"><div class="plat wb"><div class="logo">WB</div><div><div class="t">Отзывы и вопросы</div><div class="s">за последние 30 дней</div></div></div><div id="fb"></div></div>
-    <div class="card"><h2 style="margin-bottom:10px">Акции и бустинг</h2><div id="promos"></div></div>
-  </div>
-</section>
-
-<section class="sec">
-  <div class="card"><h2 style="margin-bottom:10px">Как читать цифры</h2><div class="gloss">
-    <div><b>Заказано</b> — покупатель оформил заказ. Ещё не деньги.</div>
-    <div><b>Выкуплено / доставлено</b> — товар вручён, площадка начислила деньги за него.</div>
-    <div><b>В пути</b> — заказано, но ещё едет к покупателю. Часть отменится или не заберут.</div>
-    <div><b>К выплате</b> — что реально придёт тебе после комиссии и логистики площадки.</div>
-    <div><b>FBO</b> — товар лежит на складе площадки, она сама собирает и везёт. <b>FBS</b> — товар на твоём складе, собираешь и отгружаешь сам.</div>
-    <div><b>Дней запаса</b> — остаток ÷ средние продажи в день. Меньше 14 — срочно поставка.</div>
-  </div></div>
-</section>
-
-<footer id="foot"></footer>
-</div>
-<div class="tt" id="tt"></div>
-
-<script id="data" type="application/json">__DATA__</script>
+:root{color-scheme:light;--bg:#f6f7f4;--card:#fff;--ink:#20342b;--muted:#68796e;--line:#e1e8e0;--soft:#f0f4ee;--accent:#41674b;--oz:#3772c9;--wb:#9c4190;--bad:#a04331;--warn:#9b6b1a;--radius:20px}
+:root[data-theme=dark]{color-scheme:dark;--bg:#152019;--card:#1d2a21;--ink:#ebf2e7;--muted:#acbbaa;--line:#334436;--soft:#26372a;--accent:#a3c594;--oz:#88b5ff;--wb:#dea1d4;--bad:#ffa78e;--warn:#e6c17e}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input,select{font:inherit}button,a,input,select{touch-action:manipulation}button{cursor:pointer}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:3px}a{color:inherit}button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:9px 14px}button:hover{background:var(--soft)}button[aria-pressed=true]{background:var(--ink);color:var(--card);border-color:var(--ink)}
+.side{position:fixed;inset:0 auto 0 0;width:214px;background:var(--card);border-right:1px solid var(--line);padding:34px 22px;display:flex;flex-direction:column;z-index:2}.brand{font-size:27px;font-weight:750;letter-spacing:-1px}.brand span{display:block;font-size:11px;font-weight:600;letter-spacing:3px;color:var(--muted);margin:2px 0 42px}.nav{display:flex;flex-direction:column;gap:6px}.nav a{text-decoration:none;padding:12px;border-radius:10px;color:var(--muted)}.nav a:first-child{background:var(--soft);color:var(--ink);font-weight:600}.side-bottom{margin-top:auto;color:var(--muted);font-size:12px}.side-bottom button{width:100%;margin-top:15px}
+main{max-width:1530px;margin-left:214px;padding:34px 40px 52px}.top{display:flex;align-items:center;justify-content:space-between;gap:20px}.eyebrow{color:var(--muted);font-size:11px;font-weight:650;letter-spacing:1.6px;text-transform:uppercase}h1{font-size:34px;line-height:1.15;letter-spacing:-1px;margin:8px 0}h2{font-size:21px;letter-spacing:-.4px;margin:0}h3{font-size:16px;margin:0}.sub,.note{color:var(--muted)}.sub{margin:0}.note{font-size:12px;line-height:1.65}.top-actions{display:flex;gap:8px;align-items:center}.date-badge{background:var(--soft);padding:9px 13px;border-radius:10px;color:var(--muted);font-size:12px}.controls{margin:26px 0 20px;padding:17px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius)}.pills{display:flex;gap:6px;flex-wrap:wrap}.range{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:13px;padding-top:13px;border-top:1px solid var(--line);color:var(--muted);font-size:12px}.range input,.range select{border:1px solid var(--line);border-radius:8px;padding:7px;color:var(--ink);background:var(--card);min-width:0}.range label{display:flex;align-items:center;gap:5px}.range .selected{margin-left:auto;font-weight:600;color:var(--ink)}.status{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 24px}.badge{font-size:11px;border-radius:8px;background:var(--soft);color:var(--muted);padding:6px 9px}.badge.warn{color:var(--warn)}.badge.bad{color:var(--bad)}.banner{border:1px solid var(--line);border-left:3px solid var(--warn);background:var(--card);border-radius:12px;padding:12px 15px;font-size:13px;color:var(--muted);margin-bottom:16px}.banner:empty{display:none}.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px;min-width:0}.market-head{display:flex;gap:12px;align-items:center;margin-bottom:20px}.logo{height:36px;width:36px;display:grid;place-items:center;border-radius:11px;font-size:11px;letter-spacing:.5px;background:var(--soft);font-weight:750}.oz .logo{color:var(--oz)}.wb .logo{color:var(--wb)}.market-head .note{margin:1px 0 0}.market-head .badge{margin-left:auto;white-space:nowrap}.kpis{display:grid;grid-template-columns:1fr 1fr;gap:0 22px}.kpi{padding:13px 0;border-bottom:1px solid var(--line);min-width:0}.kpi:nth-last-child(-n+2){border-bottom:0}.label{color:var(--muted);font-size:12px}.value{font-size:30px;letter-spacing:-1px;line-height:1.25;font-weight:650;font-variant-numeric:tabular-nums;margin:5px 0}.value.money{font-size:24px}.delta{font-size:11px;color:var(--muted);min-height:18px}.delta.positive{color:var(--accent)}.delta.negative{color:var(--bad)}.tiny{font-size:11px;color:var(--muted);margin:5px 0 0}.section{margin-top:30px}.section-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px;flex-wrap:wrap}.section-head .note{margin:0}.chart{min-height:180px;margin-top:16px}svg{display:block;width:100%;height:auto}.legend{display:flex;gap:16px;font-size:11px;color:var(--muted)}.legend span:before{content:"";display:inline-block;height:7px;width:7px;border-radius:2px;margin-right:5px;background:var(--oz)}.wb .legend span:before{background:var(--wb)}.legend span:nth-child(2):before{background:var(--ink)}.table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:12px}th{text-align:left;font-weight:500;color:var(--muted);padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}td{padding:12px;border-bottom:1px solid var(--line)}td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}tr:last-child td{border:0}.empty{padding:30px 10px;color:var(--muted);text-align:center;font-size:13px}.stock-pill{padding:4px 8px;border-radius:6px;background:var(--soft);font-size:11px;white-space:nowrap}.stock-pill.low{color:var(--bad)}.stock-pill.plan{color:var(--warn)}.bars{display:flex;flex-direction:column;gap:12px}.bar-row{display:grid;grid-template-columns:1fr 1.1fr 45px;gap:12px;align-items:center;font-size:12px}.bar-row .track{height:5px;background:var(--soft);border-radius:5px}.bar-row i{display:block;height:100%;border-radius:5px;background:var(--oz)}.wb .bar-row i{background:var(--wb)}.bar-row .n{text-align:right}.bars-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.attention{display:flex;flex-direction:column;gap:10px}.attention div{padding:13px 16px;background:var(--soft);border-radius:12px;font-size:13px}.attention b{display:block;margin-bottom:3px}.attention p{margin:0;color:var(--muted)}details{border-top:1px solid var(--line);padding:14px 0}details:first-child{border:0}summary{cursor:pointer;font-weight:550}.glossary{display:grid;grid-template-columns:1fr 1fr;gap:18px;font-size:12px;color:var(--muted)}.glossary b{display:block;color:var(--ink);margin-bottom:4px}footer{font-size:11px;color:var(--muted);margin-top:28px}.refresh{font-size:12px;color:var(--muted)}
+@media(min-width:1450px){main{padding-left:60px;padding-right:60px}}@media(max-width:1050px){.side{width:170px;padding:30px 15px}main{margin-left:170px;padding:28px 22px}.grid{gap:12px}.card{padding:18px}.value{font-size:27px}}@media(max-width:780px){.side{position:static;width:auto;padding:16px 20px;border-right:0;border-bottom:1px solid var(--line);flex-direction:row;align-items:center;justify-content:space-between}.brand{font-size:23px}.brand span{display:inline;font-size:9px;margin:0 0 0 10px;letter-spacing:2px}.nav,.side-bottom p{display:none}.side-bottom{margin:0}.side-bottom button{width:auto;margin:0;font-size:12px;padding:6px 9px}main{margin:0;padding:24px 16px}.top{align-items:flex-start}.top-actions{flex-direction:column;align-items:flex-end}.date-badge{display:none}h1{font-size:30px}.grid{grid-template-columns:1fr}.range .selected{width:100%;margin:0}.range input{max-width:150px}.controls{padding:13px}.pills button{padding:9px 12px}.glossary{grid-template-columns:1fr}.value{font-size:31px}.card{padding:19px}.section{margin-top:25px}}@media print{.side,.controls,.top-actions{display:none}main{margin:0;padding:0}.card{break-inside:avoid}.grid{grid-template-columns:1fr 1fr}body{background:white}}
+</style></head><body>
+<aside class="side"><div class="brand">утро<span>ECOVELLE</span></div><nav class="nav" aria-label="Разделы"><a href="#overview">Обзор продаж</a><a href="#dynamics">Динамика</a><a href="#products">Товары</a><a href="#stock">Остатки</a><a href="#details">Детали и источники</a></nav><div class="side-bottom"><p>Ваш бизнес<br>в понятных цифрах.</p><button id="theme" type="button" aria-label="Переключить тему">Тёмная тема</button></div></aside>
+<main>
+<header class="top"><div><div class="eyebrow">Wildberries + Ozon</div><h1>Обзор продаж</h1><p class="sub">Что происходит с заказами и выкупами Ecovelle</p></div><div class="top-actions"><span class="date-badge" id="generated"></span><button id="export" type="button">↓ CSV</button><button id="refresh" type="button" aria-label="Обновить страницу">↻</button></div></header>
+<section class="controls" aria-label="Выбор периода"><div class="pills" id="periods"><button data-period="yesterday">Вчера</button><button data-period="7d" aria-pressed="true">7 дней</button><button data-period="1m">Месяц</button><button data-period="3m">Квартал</button><button data-period="6m">Полгода</button><button data-period="12m">Год</button></div><div class="range"><label>С <input type="date" id="from"></label><label>по <input type="date" id="to"></label><button id="apply" type="button">Показать</button><label>Весь <select id="year"><option value="">год…</option></select></label><span class="selected" id="range-label"></span></div><p class="tiny">Быстрые периоды — последние полные дни до вчера включительно. Все показатели ниже пересчитываются по выбранным датам. Остатки — отдельный снимок на момент сбора.</p></section>
+<div id="notice" class="banner" role="status" aria-live="polite"></div><div id="sources" class="status"></div>
+<section id="overview"><div class="grid" id="summary"></div></section>
+<section id="dynamics" class="section"><div class="section-head"><h2>Заказы и выкупы</h2><p class="note" id="chart-hint"></p></div><div class="grid" id="charts"></div></section>
+<section id="products" class="section"><div class="section-head"><h2>По товарам</h2><p class="note">Единица — товарная позиция: пачка или комплект «Микс»</p></div><div class="card"><div class="table-wrap"><table id="product-table"></table></div></div></section>
+<section class="section"><div class="section-head"><h2>Куда идут заказы</h2><p class="note">Активные заказы выбранного периода</p></div><div class="grid" id="geography"></div></section>
+<section id="stock" class="section"><div class="section-head"><h2>Остатки сегодня</h2><p class="note">Запас по среднему темпу активных заказов за последние 30 полных дней</p></div><div class="card"><div class="table-wrap"><table id="stock-table"></table></div><p class="note">В днях запаса учтён только свободный остаток. Товары в поставках и возвратах показаны отдельно. При неполной истории прогноз недоступен.</p></div><div class="section" id="attention"></div></section>
+<section id="details" class="section"><div class="section-head"><h2>Детали и источники</h2><p class="note">Что именно стоит за каждой цифрой</p></div><div class="card"><details open><summary>Как читать показатели</summary><div class="glossary" style="margin-top:16px"><div><b>Заказы</b>Все товарные позиции, заказанные в выбранные даты, включая отменённые. Это количество товаров, а не число отправлений.</div><div><b>Выкупы и возвраты WB</b>По дате соответствующего события. Возврат считается отдельно и уменьшает предварительное начисление. Выкуп может относиться к более раннему заказу.</div><div><b>Отменённые заказы</b>Заказы выбранного периода, которые сейчас имеют статус отмены. Доля отмен = отменённые ÷ все заказанные позиции. Она может измениться после обновления статусов.</div><div><b>Доставленные заказы Ozon</b>Заказы выбранного периода со статусом delivered сейчас. Это не выкупы по дате вручения. Точная дата выкупа из используемого списка отправлений не определяется.</div><div><b>Предварительное начисление WB</b>Сумма forPay по продажам минус возвраты. Не включает все удержания, хранение и рекламу; итог нужно сверять с отчётом реализации.</div><div><b>Прочерк и неполный период</b>Прочерк означает отсутствие достоверных данных. Неполные суммы относятся только к доступным дням; пропуски не считаются нулевыми продажами.</div></div></details><details><summary>Состояние сбора данных</summary><div id="health"></div></details><details><summary>Отзывы, цены и акции</summary><div id="extras"></div></details></div></section>
+<footer>Wildberries API и Ozon Seller API · часовой пояс отчёта: Москва (UTC+3) · ₽ и ₸ не суммируются · обновление по расписанию GitHub Actions. История хранится в зашифрованном виде.</footer>
+</main><script id="data" type="application/json">__DATA__</script>
 <script>
+'use strict';
 const D=JSON.parse(document.getElementById('data').textContent);
-const fmt=n=>Math.round(n).toLocaleString('ru-RU').replace(/,/g,' ');
-const tg=n=>fmt(n)+' ₸', rb=n=>fmt(n)+' ₽';
-const pct=(a,b)=>b?(a/b*100):0;
-const pctS=(a,b)=>(pct(a,b)).toFixed(1).replace('.',',')+' %';
-const dlt=(a,b,txt='')=>{if(!b&&!a)return `<span class="flat">— ${txt}</span>`;if(!b)return `<span class="flat">нет данных ${txt}</span>`;const p=(a-b)/b*100;if(Math.abs(p)<0.5)return `<span class="flat">без изменений ${txt}</span>`;return `<span class="${p>0?'up':'down'}">${p>0?'+':'−'}${Math.abs(p).toFixed(0)} %</span> ${txt}`};
-const MONTHS=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
-const MN=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
-const ru=d=>{const x=new Date(d+'T00:00:00');return x.getDate()+' '+MONTHS[x.getMonth()]};
-const ruS=d=>{const x=new Date(d+'T00:00:00');return x.getDate()+'.'+String(x.getMonth()+1).padStart(2,'0')};
-const wd=d=>new Date(d+'T00:00:00').toLocaleDateString('ru-RU',{weekday:'long'});
-const mName=m=>MN[+m.slice(5,7)-1];
-document.getElementById('stamp').textContent=new Date(D.generated).toLocaleString('ru-RU',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'});
-document.getElementById('h1').textContent='Утро '+ru(D.today);
-document.getElementById('ydate').textContent=wd(D.yesterday)+', '+ru(D.yesterday);
-const O=D.oz,W=D.wb;
-document.getElementById('lead').innerHTML=`Вчера на Ozon заказали <b>${O.y.ordered} упаковок</b> на ${tg(O.y.rev)} (${dlt(O.y.ordered,O.y2.ordered,'к позавчера')}); в сентябре доставлено ${O.month[D.curMonth].delivered} из ${fmt(O.month[D.curMonth].ordered)}, остальное в пути. На Wildberries заказов <b>${W.y.ordered}</b>, выкупов ${W.y.buy} на ${rb(W.y.payout)}. Неделя на Ozon ${dlt(O.w.ordered,O.pw.ordered,'к прошлой')}, на WB ${W.w.ordered} заказов против ${W.pw.ordered} — площадка стоит из-за цены.`;
-
-const tile=(l,v,unit,d,help,big)=>`<div class="tile ${big?'big':''}"><div class="l">${l}${help?`<span class="q" title="${help}">?</span>`:''}</div><div class="v">${v}${unit?`<small>${unit}</small>`:''}</div><div class="d">${d}</div></div>`;
-// ---- Вчера
-document.getElementById('ozY').innerHTML=
- tile('Заказано',O.y.ordered,'шт',`${tg(O.y.rev)} · ${dlt(O.y.ordered,O.y2.ordered,'к позавчера')}`,'Оформлено заказов за день, без отменённых')+
- tile('Выкуплено','—','',`Ozon отключил метод выплат — за день не считается`,'С 13.09 метод /v3/finance/transaction/list отключён; за месяц выкупы считаются по статусу постингов')+
- tile('Доставлено за месяц',O.month[D.curMonth].delivered,'шт',`из ${fmt(O.month[D.curMonth].ordered)} заказанных`,'По статусу постингов delivered')+
- tile('За неделю',O.w.ordered,'шт',`${tg(O.w.rev)} · ${dlt(O.w.ordered,O.pw.ordered,'к прошлой')}`,'7 дней до вчера включительно против предыдущих 7');
-document.getElementById('wbY').innerHTML=
- tile('Заказано',W.y.ordered,'шт',W.y.ordered?`${rb(W.y.rev)}`:'заказов не было','Оформлено заказов за день, без отменённых')+
- tile('Выкуплено',W.y.buy,'шт',`к выплате ${rb(W.y.payout)}`,'Покупатели забрали товар — WB начислил деньги')+
- tile('Отменено',W.y.canc,'шт',W.y.canc?'за день':'—','Отказы и отмены за день')+
- tile('За неделю',W.w.ordered,'шт',`выкупов ${W.w.buy} · ${dlt(W.w.ordered,W.pw.ordered,'к прошлой')}`,'7 дней до вчера включительно');
-
-// ---- В пути
-const T=O.transit;const tAll=(T.fbo?.units||0)+(T.fbs?.units||0), tSum=(T.fbo?.sum||0)+(T.fbs?.sum||0);
-document.getElementById('ozTransit').innerHTML=
- tile('Всего в пути',tAll,'шт',`на ${tg(tSum)} по цене продажи`,'Заказы со статусами: ожидает сборки, ожидает отгрузки, доставляется',true)+
- tile('FBO',T.fbo?.units||0,'шт',`${tg(T.fbo?.sum||0)} · со складов Ozon`,'Со складов Ozon (Астана, Алматы)')+
- tile('FBS',T.fbs?.units||0,'шт',`${tg(T.fbs?.sum||0)} · с твоего склада`,'Отгружены с собственного склада в Алматы')+
- tile('Ожидаемая выплата',fmt(tSum*0.8),'₸',`≈ 80 % от суммы, если доедут все`,'По фактической доле выплат Ozon за август–сентябрь');
-document.getElementById('ozTransitSplit').innerHTML=tAll?`<div class="split"><i style="width:${pct(T.fbo.units,tAll)}%;background:var(--oz)"></i><i style="width:${pct(T.fbs.units,tAll)}%;background:var(--oz-deep)"></i></div><div class="split-l"><span>FBO ${pctS(T.fbo.units,tAll)}</span><span>FBS ${pctS(T.fbs.units,tAll)}</span></div>`:'';
-const WT=W.transit||{};
-document.getElementById('wbTransit').innerHTML=
- tile('К покупателям',WT.n||0,'шт',`на ${rb(WT.sum||0)}`,'Заказано и ещё не выкуплено и не отменено',true)+
- tile('Возвраты на склад',fmt(W.returning),'шт','невыкупы едут обратно на склады WB','После приёмки снова станут доступным остатком')+
- tile('Микс / Ежедневные',`${WT.byArt?.EcovelleMix||0} / ${WT.byArt?.ecovelle155||0}`,'',`в пути к покупателям`,'')+
- tile('Дневные / Ночные',`${WT.byArt?.Ecovelle245||0} / ${WT.byArt?.Ecovelle290||0}`,'',`в пути к покупателям`,'');
-document.getElementById('wbTransitNote').textContent=`Возвраты — это заказы, которые покупатели не забрали или вернули: ${fmt(W.returning)} упаковок сейчас едут на склады WB. Каждая обратная доставка платная, но после приёмки товар снова продаётся.`;
-
-// ---- Месяц
-const cm=D.curMonth,pm=D.prevMonth;
-document.getElementById('mTitle').textContent=`${mName(cm)} против ${mName(pm).toLowerCase()}`;
-document.getElementById('mHint').textContent=`${mName(cm)} — с 1-го по ${ru(D.yesterday)} (${D.daysInCur} дн.), ${mName(pm).toLowerCase()} — целиком`;
-function mtab(cur,prev,cur_,prev_,cur_rows,money){
-  const row=(l,a,b,f,help)=>`<tr><td>${l}${help?` <span class="q" title="${help}">?</span>`:''}</td><td class="n big">${f(a)}${b!==null?`<span class="delta">${dlt(a,b)}</span>`:''}</td><td class="n">${f(b)}</td></tr>`;
-  let h=`<thead><tr><th></th><th class="n">${mName(cm)}</th><th class="n">${mName(pm)}</th></tr></thead><tbody>`;
-  for(const r of cur_rows)h+=row(...r);
-  return h+'</tbody>';
-}
-const om=O.month[cm],op=O.month[pm];
-document.getElementById('ozM').innerHTML=mtab(null,null,null,null,[
- ['Заказано, шт',om.ordered,op.ordered,fmt,'Без отменённых'],
- ['Заказано, ₸',om.rev,op.rev,tg,'По цене продажи'],
- ['В день, шт',om.ordered/Math.max(D.daysInCur,1),op.ordered/31,v=>v.toFixed(1).replace('.',','),'Средний темп'],
- ['Выкуплено, шт',om.delivered,op.delivered,fmt,'Доставлено в этом месяце (в том числе заказы прошлого)'],
- ['Начислено, ₸',om.accrued,op.accrued,tg,'За доставленные'],
- ['Комиссия + логистика',om.commission+om.logistics,op.commission+op.logistics,v=>'−'+tg(-v),''],
- ['Прочие сборы и штрафы',om.fees,op.fees,v=>'−'+tg(-v),'Кросс-докинг, штрафы за отгрузку, обработка излишков'],
- ['К выплате, ₸',om.payout+om.fees,op.payout+op.fees,tg,'Начислено минус всё удержанное'],
- ['Отменено, шт',om.canc,op.canc,v=>fmt(v),''],
- ['Доля отмен',pct(om.canc,om.ordered+om.canc),pct(op.canc,op.ordered+op.canc),v=>v.toFixed(1).replace('.',',')+' %',''],
- ['FBO / FBS, шт',`${om.fbo} / ${om.fbs}`,`${op.fbo} / ${op.fbs}`,v=>v,''],
-]);
-const wm=W.month[cm],wp=W.month[pm];
-document.getElementById('wbM').innerHTML=mtab(null,null,null,null,[
- ['Заказано, шт',wm.ordered,wp.ordered,fmt,'Без отменённых'],
- ['Заказано, ₽',wm.rev,wp.rev,rb,'По цене со скидкой продавца'],
- ['В день, шт',wm.ordered/Math.max(D.daysInCur,1),wp.ordered/31,v=>v.toFixed(1).replace('.',','),''],
- ['Выкуплено, шт',wm.delivered,wp.delivered,fmt,'Покупатели забрали в этом месяце — включая заказы прошлых месяцев'],
- ['К выплате, ₽',wm.payout,wp.payout,rb,'forPay — после комиссии WB'],
- ['Отменено, шт',wm.canc,wp.canc,fmt,''],
- ['Доля отмен',pct(wm.canc,wm.ordered+wm.canc),pct(wp.canc,wp.ordered+wp.canc),v=>v.toFixed(1).replace('.',',')+' %',''],
-]);
-document.getElementById('wbMNote').textContent=`Выкупов в августе (${fmt(wp.delivered)}) больше, чем заказов (${fmt(wp.ordered)}), потому что забирали заказы конца июля — тогда было ~1 300 заказов за два дня.`;
-
-// ---- Charts: ordered bars + delivered inner bar
-const tt=document.getElementById('tt');const showTT=(e,h)=>{tt.innerHTML=h;tt.style.opacity=1;moveTT(e)};const moveTT=e=>{let x=e.clientX+12,y=e.clientY-tt.offsetHeight-10;if(x+tt.offsetWidth>innerWidth-8)x=e.clientX-tt.offsetWidth-12;if(y<8)y=e.clientY+12;tt.style.left=x+'px';tt.style.top=y+'px'};const hideTT=()=>tt.style.opacity=0;
-function chart(el,ord,del,color,unit){
-  const W_=520,H=150,pl=30,pb=20,pt=8;const max=Math.max(1,...ord.map(r=>r[1]),...del.map(r=>r[1]));const ymax=Math.ceil(max/10)*10||10;
-  const n=ord.length,slot=(W_-pl)/n,bw=slot-3;const x=i=>pl+i*slot;const y=v=>pt+(H-pt-pb)*(1-v/ymax);
-  let s=`<svg viewBox="0 0 ${W_} ${H}" role="img">`;
-  [0,ymax/2,ymax].forEach(v=>{s+=`<line class="gl" x1="${pl}" x2="${W_}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${pl-5}" y="${y(v)+4}" text-anchor="end">${v}</text>`});
-  ord.forEach((r,i)=>{const d=del[i]||[r[0],0,0];
-    s+=`<rect x="${x(i)+1}" y="${y(r[1])}" width="${bw}" height="${Math.max(0,y(0)-y(r[1]))}" rx="2" fill="${color}" opacity="${i===n-1?1:.72}"/>`;
-    if(d[1])s+=`<rect x="${x(i)+1+bw*0.3}" y="${y(d[1])}" width="${bw*0.4}" height="${Math.max(0,y(0)-y(d[1]))}" rx="1.5" fill="var(--ink)" opacity=".85"/>`;
-    s+=`<rect x="${x(i)}" y="${pt}" width="${slot}" height="${H-pt-pb}" fill="transparent" data-tip="<b>${ruS(r[0])}</b><br>Заказано: ${r[1]} шт · ${fmt(r[2])} ${unit}<br>Выкуплено: ${d[1]} шт${d[2]?` · к выплате ${fmt(d[2])} ${unit}`:''}${r[3]?`<br>Отмен: ${r[3]}`:''}"/>`;
-    const dd=new Date(r[0]+'T00:00:00');if(dd.getDay()===1)s+=`<text class="ax" x="${x(i)+bw/2}" y="${H-5}" text-anchor="middle">${ruS(r[0])}</text>`});
-  s+='</svg>';el.innerHTML=s;
-  el.querySelectorAll('[data-tip]').forEach(r=>{r.addEventListener('mouseenter',e=>showTT(e,r.dataset.tip));r.addEventListener('mousemove',moveTT);r.addEventListener('mouseleave',hideTT);r.addEventListener('touchstart',e=>showTT(e.touches[0],r.dataset.tip),{passive:true})});
-}
-chart(document.getElementById('ozChart'),O.daily,O.deliv,'var(--oz)','₸');
-chart(document.getElementById('wbChart'),W.daily,W.buy,'var(--wb)','₽');
-
-// ---- География
-function bars(items,max,color,fmtN){return `<div class="bars">${items.map(([l,v])=>`<span class="lbl" title="${l}">${l}</span><div class="trk"><i style="width:${pct(v,max)}%;background:${color}"></i></div><span class="n">${fmtN?fmtN(v):v}</span>`).join('')}</div>`}
-const G=O.geo;const gTot=G.kz+G.ru+G.unknown;
-document.getElementById('ozGeo').innerHTML=`
-<div class="split"><i style="width:${pct(G.ru,gTot)}%;background:var(--oz)"></i><i style="width:${pct(G.kz,gTot)}%;background:var(--oz-deep)"></i><i style="width:${pct(G.unknown,gTot)}%;background:var(--neutral-bar)"></i></div>
-<div class="split-l"><span>Россия ${pctS(G.ru,gTot)}</span><span>Казахстан ${pctS(G.kz,gTot)}</span><span>город не указан ${pctS(G.unknown,gTot)}</span></div>
-<div class="eyebrow" style="margin:14px 0 8px">Топ городов</div>${bars(G.cities.slice(0,12).map(([c,v])=>[c,v.q]),G.cities[0][1].q,'var(--oz)')}
-<p class="note">Отгрузка идёт со складов Ozon: Астана ${fmt(G.whs['АСТАНА_РФЦ']||0)} шт, Алматы ${fmt(G.whs['АЛМАТЫ_2_РФЦ']||0)} шт. ${pctS(G.dtype.PVZ||0,(G.dtype.PVZ||0)+(G.dtype.Courier||0))} покупателей забирают в пунктах выдачи.</p>`;
-const WG=W.geo;const cTot=WG.countries.reduce((s,c)=>s+c[1],0);
-document.getElementById('wbGeo').innerHTML=`
-<div class="split">${WG.countries.slice(0,3).map((c,i)=>`<i style="width:${pct(c[1],cTot)}%;background:${['var(--wb)','var(--wb-deep)','var(--neutral-bar)'][i]}"></i>`).join('')}</div>
-<div class="split-l">${WG.countries.slice(0,3).map(c=>`<span>${c[0]} ${pctS(c[1],cTot)}</span>`).join('')}</div>
-<div class="eyebrow" style="margin:14px 0 8px">Топ регионов</div>${bars(WG.regions.slice(0,12),WG.regions[0][1],'var(--wb)')}
-<p class="note">Заказы с ${ru('2026-08-01')}: всего ${fmt(cTot)}. Склады отгрузки — Котовск и склад WB РФ; казахстанские склады WB сейчас пустые, поэтому заказы из Казахстана едут из России.</p>`;
-
-// ---- Отмены
-const oc=O.cancels;const ocTot=Object.values(oc).reduce((a,b)=>a+b,0);const ocOrdered=om.ordered+op.ordered+om.canc+op.canc;
-document.getElementById('ozCanc').innerHTML=`<div class="tiles" style="grid-template-columns:repeat(2,1fr)">${tile('Доля отмен',pctS(ocTot,ocOrdered),'',`${ocTot} из ${fmt(ocOrdered)} заказов с 6 августа`,'Отменённые и отказы при вручении',true)}${tile('В сентябре',om.canc,'шт',`из ${om.ordered+om.canc} заказов · ${pctS(om.canc,om.ordered+om.canc)}`,'')}</div>
-<div class="eyebrow" style="margin:14px 0 8px">Причины</div>${bars(Object.entries(oc).sort((a,b)=>b[1]-a[1]),Math.max(...Object.values(oc)),'var(--neutral-bar)')}
-<p class="note">Ozon возвращает деньги покупателю, а обратная логистика отказа ложится на продавца (≈ 299 ₸ за упаковку).</p>`;
-const wcTot=wm.canc+wp.canc,wcOrd=wm.ordered+wp.ordered+wcTot;
-document.getElementById('wbCanc').innerHTML=`<div class="tiles" style="grid-template-columns:repeat(2,1fr)">${tile('Доля отмен',pctS(wcTot,wcOrd),'',`${wcTot} из ${fmt(wcOrd)} заказов с 1 августа`,'Отмены до выкупа',true)}${tile('Невыкупы в пути назад',fmt(W.returning),'шт','едут обратно на склады WB','Покупатель не забрал или вернул на пункте выдачи')}</div>
-<p class="note">У WB две потери: отмена до получения (${pctS(wcTot,wcOrd)}) и невыкуп на пункте выдачи. Второе видно по объёму возвратов: ${fmt(W.returning)} упаковок против ${fmt(wp.delivered+wm.delivered)} выкупов за два месяца — ориентировочно каждая третья-четвёртая посылка возвращается.</p>`;
-
-// ---- Требует внимания (аналитика дня — переписывается агентом)
-const P=W.prices;const st=D.stock;const wbFree=st.wb.reduce((s,r)=>s+r.free,0);
-const items=D.items||[];
-document.getElementById('att').innerHTML=items.map((i,k)=>`<div class="a ${i.c}"><span class="n">${k+1}</span><div><h3>${i.h}<span>${i.w}</span></h3><p>${i.p}</p>${i.a?`<div class="act">${i.a}</div>`:''}</div></div>`).join('');
-
-// ---- Остатки
-const pill=days=>{if(days===null)return '<span class="pill mute">нет темпа</span>';if(days<14)return `<span class="pill crit">● ${days} дн. — срочно</span>`;if(days<45)return `<span class="pill warn">▲ ${days} дн.</span>`;if(days>150)return `<span class="pill warn">■ ${days} дн. — избыток</span>`;return `<span class="pill ok">✓ ${days} дн.</span>`};
-let t=`<thead><tr><th>Площадка · товар</th><th class="n">Свободно</th><th class="n">Едет на склад</th><th class="n">Темп, шт/день</th><th>Хватит на</th></tr></thead><tbody>`;
-for(const r of st.oz)t+=`<tr><td><span class="tag oz">Ozon</span> <b>${r.name}</b><div class="whs">${r.wh.map(w=>`${w.wh}: ${fmt(w.free)}${w.promised?` (+${w.promised} едет)`:''}`).join(' · ')}</div></td><td class="n big">${fmt(r.free)}</td><td class="n">${r.promised||'—'}</td><td class="n">${r.rate}</td><td>${pill(r.days)}</td></tr>`;
-for(const r of st.wb)t+=`<tr><td><span class="tag wb">WB</span> <b>${r.name}</b><div class="whs">${r.wh.slice(0,3).map(w=>`${w.wh}: ${w.free}`).join(' · ')}${r.wh.length>3?' · …':''}</div></td><td class="n big">${fmt(r.free)}</td><td class="n">${fmt(r.returning)} <span style="color:var(--muted);font-size:12px">возвр.</span></td><td class="n">${r.rate14} <span style="color:var(--muted);font-size:12px">до паузы</span></td><td>${pill(r.days)}</td></tr>`;
-document.getElementById('stockTbl').innerHTML=t+'</tbody>';
-const ozTot=st.oz.reduce((s,r)=>s+r.free+r.promised,0);
-document.getElementById('stockNote').innerHTML=`На Ozon всего <b>${fmt(ozTot)}</b> упаковок (≈ ${tg(ozTot*3600)} по цене продажи), на Wildberries <b>${fmt(wbFree)}</b> свободно и ${fmt(W.returning)} возвращается. Темп Ozon — среднее за 7 дней; для WB — темп до остановки продаж ценой.`;
-
-// ---- Отзывы
-const fb=W.feedback;const d=fb.sinceAug7.dist;const mx=Math.max(...Object.values(d));
-document.getElementById('fb').innerHTML=`<div class="tiles" style="grid-template-columns:repeat(3,1fr)">${tile('Средняя',fb.sinceAug7.avg.toFixed(2).replace('.',','),'★',`${fb.sinceAug7.n} отзывов`,'',true)}${tile('Без ответа',fmt(fb.unansweredTotal),'',`+${fb.unansweredToday} сегодня`,'')}${tile('Вопросов',fb.questionsUnanswered,'','без ответа','')}</div>
-<div class="bars" style="margin-top:12px">${[5,4,3,2,1].map(k=>`<span class="lbl">${k} ★</span><div class="trk"><i style="width:${pct(d[k]||0,mx)}%;background:var(--wb)"></i></div><span class="n">${d[k]||0}</span>`).join('')}</div>
-<div class="themes">${fb.themes.map(t=>`<span><b>${t[1]}</b> ${t[0]}</span>`).join('')}</div>
-<div class="eyebrow" style="margin-top:14px">Последние низкие оценки</div>
-${fb.lowRecent.slice(0,5).map(r=>`<div class="rev low"><div class="m">${ruS(r.d)} · ${D.names[r.art]||r.art} · ${'★'.repeat(r.v)}${'☆'.repeat(5-r.v)}</div>${r.text}</div>`).join('')}
-<p class="note">Отзывы Ozon через API недоступны без Premium Plus — смотреть в кабинете.</p>`;
-
-// ---- Акции
-const today=D.today;
-const rowP=(tag,name,from,to,extra)=>{const live=from<=today&&to>=today;const soon=from>today;return `<div class="promo"><span class="tag ${tag}">${tag==='oz'?'Ozon':'WB'}</span><div><b>${name}</b>${extra?`<div style="font-size:12.5px;color:var(--ink-2)">${extra}</div>`:''}</div><div class="when">${live?'<span class="pill ok">идёт</span> ':soon?'<span class="pill warn">скоро</span> ':''}${ruS(from)}–${ruS(to)}</div></div>`};
-let ph='';
-for(const a of O.actions.filter(a=>a.to>=today).sort((a,b)=>a.from.localeCompare(b.from)))ph+=rowP('oz',a.title,a.from,a.to,`${a.part?'участвуешь':'не участвуешь'} · подходят ${a.pot} товаров`);
-for(const p of W.promos.filter(p=>p.end>=today).sort((a,b)=>a.start.localeCompare(b.start)))ph+=rowP('wb',p.name,p.start,p.end,'автоакция WB — применяется сама, если не отключить');
-document.getElementById('promos').innerHTML=ph;
-
-document.getElementById('foot').innerHTML=`Источники: Ozon Seller API (заказы FBO/FBS, остатки, акции) и Wildberries API (заказы, выкупы, остатки, отзывы, цены, календарь акций). Ozon в тенге, Wildberries в рублях — не суммируются. «Выкуплено» на Ozon сегодня — по статусу постингов: Ozon 13 сентября отключил метод финансовых транзакций v3, поэтому суммы начислений и выплат за сентябрь недоступны. На WB — по дате выкупа. Только прокладки Ecovelle.`;
-</script>
+const MARKET_ORDER=['wb','oz'];
+const $=id=>document.getElementById(id);
+const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=n=>n===null||n===undefined?'—':new Intl.NumberFormat('ru-RU',{maximumFractionDigits:0}).format(n);
+const currency=id=>({KZT:'₸',RUB:'₽',USD:'$',EUR:'€'}[D.markets[id].currency]||D.markets[id].currency||'валюта не определена');
+const money=(n,id)=>n===null?'—':new Intl.NumberFormat('ru-RU',{maximumFractionDigits:2}).format(n/100)+' '+esc(currency(id));
+const date=s=>new Date(s+'T00:00:00Z');
+const iso=d=>d.toISOString().slice(0,10);
+const shift=(s,n)=>{const d=date(s);d.setUTCDate(d.getUTCDate()+n);return iso(d)};
+const monthShift=(s,n)=>{const d=date(s),day=d.getUTCDate();d.setUTCDate(1);d.setUTCMonth(d.getUTCMonth()+n);const last=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,0)).getUTCDate();d.setUTCDate(Math.min(day,last));return iso(d)};
+const short=s=>date(s).toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric',timeZone:'UTC'});
+const time=s=>s?new Date(s).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',timeZone:D.timezone}):'не собраны';
+const eachDay=(start,end)=>{const result=[];for(let day=start;day<=end;day=shift(day,1))result.push(day);return result};
+const title=id=>id==='oz'?'Ozon':'Wildberries';
+const cls=id=>id==='oz'?'oz':'wb';
+const head=(id,note='',badge='')=>`<div class="market-head ${cls(id)}"><div class="logo">${id==='oz'?'OZ':'WB'}</div><div><h3>${title(id)}</h3><p class="note">${esc(note)}</p></div>${badge?`<span class="badge ${badge.includes('непол')?'warn':''}">${esc(badge)}</span>`:''}</div>`;
+const end=shift(D.today,-1);let current={from:shift(D.today,-7),to:end};
+const span=current=>Math.round((date(current.to)-date(current.from))/86400000)+1;
+function totals(id,range){const market=D.markets[id],expected=eachDay(range.from,range.to),days=expected.filter(day=>Object.hasOwn(market.days,day));const out={count:days.length,expected:expected.length,complete:days.length===expected.length,products:{},geo:{}};
+ for(const key of ['orders','orderAmount','active','cancelledOrders','buyouts','returns','netPayout','deliveredCohort','cancels','fbo','fbs']){const values=days.map(day=>market.days[day][key]);out[key]=values.length&&values.every(v=>v!==null&&v!==undefined)?values.reduce((a,b)=>a+b,0):null;}
+ for(const day of days){const row=market.days[day];for(const [sku,value] of Object.entries(row.products)){const product=out.products[sku]??={orders:0,buyouts:id==='wb'?0:null,returns:id==='wb'?0:null};for(const k of ['orders','buyouts','returns'])if(product[k]!==null)product[k]+=value[k]||0;}for(const [name,n] of Object.entries(row.geo))out.geo[name]=(out.geo[name]||0)+n;}
+ return out;}
+const previous=range=>({to:shift(range.from,-1),from:shift(range.from,-span(range))});
+function delta(value,prev,complete){if(value===null||prev===null||!complete)return '<span class="delta">Сравнение недоступно</span>';if(prev===0)return `<span class="delta">${value===0?'Без изменений':'Раньше было 0'}</span>`;const n=(value-prev)/prev*100;return `<span class="delta ${n>0?'positive':n<0?'negative':''}">${n>0?'+':''}${n.toFixed(1).replace('.',',')} % к предыдущим ${span(current)} дням</span>`;}
+function kpi(label,value,comparison,note='',isMoney=false){return `<div class="kpi"><div class="label">${esc(label)}</div><div class="value ${isMoney?'money':''}">${value}</div>${comparison}<p class="tiny">${esc(note)}</p></div>`;}
+function summary(id){const cur=totals(id,current),prev=totals(id,previous(current));const compare=key=>delta(cur[key],prev[key],cur.complete&&prev.complete);const coverage=cur.complete?'Полный период':`Данные за ${cur.count} из ${cur.expected} дней · неполно`;
+ let content=kpi('Заказанные позиции',fmt(cur.orders),compare('orders'),'Включая отменённые')+kpi('Сумма заказов',money(cur.orderAmount,id),compare('orderAmount'),'По цене со скидкой продавца',true);
+ if(id==='wb'){content+=kpi('Выкуплено',fmt(cur.buyouts),compare('buyouts'),'По дате выкупа')+kpi('Возвращено после выкупа',fmt(cur.returns),compare('returns'),'По дате возврата');content+=kpi('Предварительно начислено',money(cur.netPayout,id),compare('netPayout'),'Продажи минус возвраты; без всех удержаний',true);}
+ else{content+=kpi('Выкупы по дате вручения','—','<span class="delta">Источник пока не подключён</span>','Из статуса заказа дату выкупа определить нельзя')+kpi('Доставлено из этих заказов',fmt(cur.deliveredCohort),'<span class="delta">Текущий статус выбранных заказов</span>','Заказы периода, уже доставленные');content+=kpi('Предварительно начислено','—','<span class="delta">Источник пока не подключён</span>','Недоступная сумма не заменяется нулём',true);}
+ const ratio=cur.orders?`${(cur.cancelledOrders/cur.orders*100).toFixed(1).replace('.',',')} % заказов периода`:'Заказы периода со статусом отмены';content+=kpi('Отменённые заказы',fmt(cur.cancelledOrders),'<span class="delta">'+esc(ratio)+'</span>','По дате заказа, а не по дате отмены');
+ return `<article class="card ${cls(id)}">${head(id,`Обновлено ${time(D.markets[id].updatedAt)} МСК`,coverage)}<div class="kpis">${content}</div>${!cur.complete?`<p class="note">Показаны суммы только по доступным дням. Для полной истории WB старше 90 дней нужен импорт архивных выгрузок.</p>`:''}${D.markets[id].currencyAssumed?'<p class="tiny">Валюта Ozon задана настройкой кабинета: '+esc(currency(id))+'</p>':''}</article>`;}
+function groups(range){const days=eachDay(range.from,range.to),size=days.length<=45?'day':days.length<=180?'week':'month';const result=[];for(const day of days){let group=result.at(-1);const same=group&&(size==='month'?group.start.slice(0,7)===day.slice(0,7):size==='week'?group.days.length<7:false);if(!same){group={start:day,end:day,days:[]};result.push(group);}group.end=day;group.days.push(day);}return {size,rows:result};}
+function chart(id){const {size,rows}=groups(current),market=D.markets[id];const series=rows.map(group=>({...group,...totals(id,{from:group.start,to:group.end})}));const max=Math.max(1,...series.map(row=>row.orders||0),...series.map(row=>row.buyouts||0)),top=Math.ceil(max/5)*5;const width=560,height=196,left=36,right=8,bottom=29,plot=145;const slot=(width-left-right)/series.length,bw=Math.max(1,slot*.58);const y=n=>14+plot*(1-n/top);const color=id==='oz'?'var(--oz)':'var(--wb)';let svg=`<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${title(id)}: заказы ${short(current.from)} — ${short(current.to)}"><title>Заказы и выкупы за выбранный период; пропуски отмечены отдельно</title>`;
+ for(const n of [0,top/2,top])svg+=`<line x1="${left}" x2="${width-right}" y1="${y(n)}" y2="${y(n)}" stroke="var(--line)"/><text x="${left-7}" y="${y(n)+4}" font-size="10" text-anchor="end" fill="var(--muted)">${fmt(n)}</text>`;
+ const tick=Math.max(1,Math.ceil(series.length/7));series.forEach((row,i)=>{const x=left+i*slot+slot/2;const tooltip=`${short(row.start)} — ${short(row.end)}; заказы: ${fmt(row.orders)}; выкупы: ${fmt(row.buyouts)}; данные за ${row.count} из ${row.expected} дней`;
+ if(row.orders!==null)svg+=`<rect x="${x-bw/2}" y="${y(row.orders)}" width="${bw}" height="${Math.max(0,y(0)-y(row.orders))}" rx="2" fill="${color}" opacity="${row.complete?.78:.35}"><title>${esc(tooltip)}</title></rect>`;
+ if(row.buyouts!==null)svg+=`<rect x="${x-bw*.2}" y="${y(row.buyouts)}" width="${Math.max(1,bw*.4)}" height="${Math.max(0,y(0)-y(row.buyouts))}" rx="1" fill="var(--ink)"><title>${esc(tooltip)}</title></rect>`;
+ if(!row.complete)svg+=`<text x="${x}" y="${y(0)-4}" text-anchor="middle" fill="var(--warn)" font-size="11"><title>${esc(tooltip)}</title>·</text>`;
+ if(i%tick===0)svg+=`<text x="${x}" y="${height-10}" fill="var(--muted)" font-size="10" text-anchor="middle">${size==='month'?row.start.slice(5,7)+'.'+row.start.slice(2,4):row.start.slice(8,10)+'.'+row.start.slice(5,7)}</text>`;});
+ svg+='</svg>';return `<article class="card ${cls(id)}">${head(id,size==='day'?'По дням':size==='week'?'По отрезкам 7 дней':'По месяцам')}<div class="legend"><span>Заказы</span>${market.buyoutsAvailable?'<span>Выкупы</span>':''}</div><div class="chart">${svg}</div><p class="tiny">${id==='oz'?'Выкупы по дате вручения недоступны в используемом источнике.':'Выкупы включают заказы, оформленные раньше выбранного периода.'} Точки у основания — дни с неполными данными.</p></article>`;}
+function renderProducts(){let html='<thead><tr><th>Площадка · товар</th><th class="n">Заказы</th><th class="n">Выкупы</th><th class="n">Возвраты</th></tr></thead><tbody>';for(const id of MARKET_ORDER){const cur=totals(id,current);for(const sku of D.markets[id].products){const p=cur.products[sku]||{orders:cur.count?0:null,buyouts:cur.count&&id==='wb'?0:null,returns:cur.count&&id==='wb'?0:null};html+=`<tr><td><span class="badge">${title(id)}</span> ${esc(D.names[sku])}<div class="tiny">${esc(sku)}${cur.complete?'':' · неполный период'}</div></td><td class="n">${fmt(p.orders)}</td><td class="n">${fmt(p.buyouts)}</td><td class="n">${fmt(p.returns)}</td></tr>`;}}$('product-table').innerHTML=html+'</tbody>';}
+function bars(items,id){if(!items.length)return '<div class="empty">За выбранные даты нет активных заказов с географией</div>';const max=Math.max(...items.map(x=>x[1]),1);return `<div class="bars">${items.slice(0,8).map(([name,n])=>`<div class="bar-row"><span class="bars-name" title="${esc(name)}">${esc(name)}</span><div class="track"><i style="width:${n/max*100}%"></i></div><span class="n">${fmt(n)}</span></div>`).join('')}</div>`;}
+function renderGeo(){$('geography').innerHTML=MARKET_ORDER.map(id=>{const data=totals(id,current),items=Object.entries(data.geo).sort((a,b)=>b[1]-a[1]);return `<article class="card ${cls(id)}">${head(id,id==='oz'?'Города покупателей':'Страны покупателей')}${bars(items,id)}${!data.complete?'<p class="tiny">Только доступные дни выбранного периода</p>':''}</article>`;}).join('');}
+const snapshot=name=>D.snapshots[name];
+function stockRows(){const rows=[],range={from:shift(D.today,-30),to:end};for(const id of MARKET_ORDER){const snap=snapshot(id+'_stock'),rate=totals(id,range);for(const sku of D.markets[id].products){let free=null,incoming=null,toClient=null;const warehouses=[];if(snap){free=0;incoming=0;if(id==='oz'){for(const row of snap.data.filter(r=>r.sku===sku)){free+=row.free;incoming+=row.promised;warehouses.push(row.warehouse+': '+fmt(row.free));}}else{const row=snap.data[sku];free=row?.total??0;incoming=row?.returning??0;toClient=row?.toClient??0;for(const [name,n]of Object.entries(row?.wh||{}))if(n)warehouses.push(name+': '+fmt(n));}}
+ const rates=D.stockRates?.[id]||{};const daily=rate.complete?(rates[sku]??0):null;
+ rows.push({id,sku,free,incoming,toClient,rate:daily,days:free!==null&&daily>0?Math.floor(free/daily):null,warehouses,asOf:snap?.asOf,stale:!D.status[id+'_stock']?.ok});}}
+ return rows;}
+function renderStock(){const rows=stockRows();let html='<thead><tr><th>Площадка · товар</th><th class="n">Свободно</th><th class="n">На склад</th><th class="n">К покупателям</th><th class="n">Шт/день</th><th class="n">Дней запаса</th></tr></thead><tbody>';const attention=[];for(const row of rows){const state=row.days!==null&&row.days<14?'low':row.days!==null&&row.days<45?'plan':'';html+=`<tr><td><span class="badge">${title(row.id)}</span> <b>${esc(D.names[row.sku])}</b><div class="tiny">${esc(row.warehouses.join(' · ')||'Распределение недоступно')}</div><div class="tiny">${time(row.asOf)} МСК${row.stale?' · последний успешный снимок':''}</div></td><td class="n">${fmt(row.free)}</td><td class="n">${fmt(row.incoming)}${row.id==='wb'?' <span class="tiny">возвраты</span>':''}</td><td class="n">${fmt(row.toClient)}</td><td class="n">${row.rate===null?'—':row.rate.toFixed(1).replace('.',',')}</td><td class="n"><span class="stock-pill ${state}">${row.days===null?'нет прогноза':fmt(row.days)+' дн.'}</span></td></tr>`;
+ if(!row.stale&&row.free===0&&row.rate>0)attention.push({title:`${title(row.id)} · ${D.names[row.sku]}: нет свободного остатка`,body:'Проверьте доступность карточки и возможность поставки.'});else if(!row.stale&&row.days!==null&&row.days<45)attention.push({title:`${title(row.id)} · ${D.names[row.sku]}: около ${row.days} дней запаса`,body:'Планируйте поставку с учётом вашего срока производства, доставки и приёмки.'});}
+ $('stock-table').innerHTML=html+'</tbody>';$('attention').innerHTML=attention.length?'<div class="section-head"><h2>Требует внимания</h2><p class="note">По текущим остаткам и спросу</p></div><div class="attention">'+attention.map(item=>`<div><b>${esc(item.title)}</b><p>${esc(item.body)}</p></div>`).join('')+'</div>':'';}
+function renderHealth(){const names={wb:'WB: заказы и продажи',wb_stock:'WB: остатки',wb_prices:'WB: цены продавца',wb_feedback:'WB: отзывы',wb_promos:'WB: акции',oz:'Ozon: заказы FBO/FBS',oz_stock:'Ozon: остатки',oz_actions:'Ozon: акции'};$('health').innerHTML='<div class="table-wrap"><table><thead><tr><th>Источник</th><th>Результат последнего запуска</th></tr></thead><tbody>'+Object.entries(names).map(([key,label])=>{const status=D.status[key];return `<tr><td>${esc(label)}</td><td>${status?.ok?'Собран':'<span class="badge bad">Ошибка / нет данных</span>'}${status?.error?`<p class="note">${esc(status.error)}</p>`:''}</td></tr>`;}).join('')+'</tbody></table></div>';
+ $('sources').innerHTML=MARKET_ORDER.map(id=>{const intervals=D.markets[id].coverage;return `<span class="badge ${D.status[id]?.ok?'':'bad'}">${title(id)} · ${D.status[id]?.ok?'собран':'ошибка сбора'}${intervals.length?' · история с '+short(intervals[0][0]):' · истории нет'}</span>`;}).join('')+'<span class="badge warn">Выкупы и начисления Ozon: источник не подключён</span>';
+ const feedback=snapshot('wb_feedback'),prices=snapshot('wb_prices');let html='';if(feedback){const data=feedback.data,sample=data.sinceAug7||{};html+=`<h3 style="margin-top:16px">Отзывы WB</h3><p class="note">Снимок ${time(feedback.asOf)} МСК${D.status.wb_feedback?.ok?'':' · последний успешный'}. Выборка до 300 последних отзывов, отфильтрованная за 30 дней: ${fmt(sample.n)} отзывов; средняя ${sample.n?Number(sample.avg).toFixed(2).replace('.',','):'—'}. Это выборка, а не полная статистика всех отзывов.</p>`;for(const row of (data.lowRecent||[]).slice(0,4))html+=`<p class="note">${short(row.d)} · ${esc(D.names[row.art]||row.art)} · ${fmt(row.v)} ★<br>${esc(row.text)}</p>`;}
+ if(prices)html+=`<h3 style="margin-top:16px">Цены WB</h3><p class="note">Цена со скидкой продавца, без персональной скидки покупателя. Снимок ${time(prices.asOf)} МСК${D.status.wb_prices?.ok?'':' · последний успешный'}</p>`+Object.entries(prices.data).map(([sku,value])=>`<p class="note">${esc(D.names[sku]||sku)}: ${value.final===null||value.final===undefined?'—':fmt(value.final)+' ₽'}</p>`).join('');
+ for(const [name,label]of [['wb_promos','Акции WB'],['oz_actions','Акции Ozon']]){const snap=snapshot(name);if(snap){html+=`<h3 style="margin-top:16px">${label}</h3><p class="tiny">Снимок ${time(snap.asOf)} МСК${D.status[name]?.ok?'':' · последний успешный'}</p>`;const rows=snap.data.filter(row=>(row.date_end||row.end||'').slice(0,10)>=D.today);html+=rows.length?rows.slice(0,8).map(row=>`<p class="note">${esc(row.title||row.name)} · ${esc((row.date_start||row.start||'').slice(0,10))} — ${esc((row.date_end||row.end||'').slice(0,10))}</p>`).join(''):'<p class="note">В собранном списке нет действующих или будущих акций.</p>';}}
+ $('extras').innerHTML=html||'<p class="note">Дополнительные источники ещё не собраны.</p>';}
+function render(){const warnings=[];if(!D.demo&&Date.now()-Date.parse(D.generated)>86400000)warnings.push('Сводка не обновлялась больше суток. Проверьте последний запуск GitHub Actions.');for(const id of MARKET_ORDER){const cur=totals(id,current);if(!cur.complete)warnings.push(`${title(id)}: доступны ${cur.count} из ${cur.expected} дней. Итоги неполные.`);}const failed=Object.entries(D.status).filter(([,value])=>!value.ok).length;if(failed)warnings.push(`Не удалось обновить ${failed} источников; подробности в разделе «Состояние сбора данных».`);$('notice').textContent=warnings.join(' ');$('range-label').textContent=short(current.from)+' — '+short(current.to)+' · '+span(current)+' дн.';$('summary').innerHTML=MARKET_ORDER.map(summary).join('');$('charts').innerHTML=MARKET_ORDER.map(chart).join('');$('chart-hint').textContent='Один период для всех показателей';renderProducts();renderGeo();}
+function setRange(from,to){if(!/^\d{4}-\d{2}-\d{2}$/.test(from)||!/^\d{4}-\d{2}-\d{2}$/.test(to)||isNaN(+date(from))||isNaN(+date(to))||from>to||to>end||span({from,to})>3660){$('notice').textContent='Выберите корректный период до вчера включительно, не длиннее 10 лет.';return false;}current={from,to};$('from').value=from;$('to').value=to;render();return true;}
+$('periods').addEventListener('click',event=>{const button=event.target.closest('button[data-period]');if(!button)return;const key=button.dataset.period,from=key==='yesterday'?end:key==='7d'?shift(D.today,-7):monthShift(D.today,-parseInt(key));setRange(from,end);document.querySelectorAll('[data-period]').forEach(other=>other.setAttribute('aria-pressed',String(other===button)));$('year').value='';});
+$('apply').addEventListener('click',()=>{if(setRange($('from').value,$('to').value)){document.querySelectorAll('[data-period]').forEach(button=>button.setAttribute('aria-pressed','false'));$('year').value='';}});
+const firstYears=Object.values(D.markets).flatMap(m=>m.coverage.map(pair=>Number(pair[0].slice(0,4))));const firstYear=Math.min(...firstYears,Number(D.today.slice(0,4)));for(let year=Number(D.today.slice(0,4));year>=firstYear;year--)$('year').insertAdjacentHTML('beforeend',`<option value="${year}">${year}</option>`);
+$('year').addEventListener('change',()=>{if(!$('year').value)return;const year=$('year').value;if(setRange(year+'-01-01',year===D.today.slice(0,4)?end:year+'-12-31'))document.querySelectorAll('[data-period]').forEach(button=>button.setAttribute('aria-pressed','false'));});
+$('from').max=end;$('to').max=end;$('generated').textContent='Обновлено '+time(D.generated)+' МСК';
+const reloadFresh=()=>location.replace(location.pathname+'?updated='+Date.now());
+$('refresh').addEventListener('click',reloadFresh);
+let hiddenAt=null;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')hiddenAt=Date.now();else if(hiddenAt&&Date.now()-hiddenAt>600000)reloadFresh();});
+window.addEventListener('pageshow',event=>{if(event.persisted)reloadFresh();});
+function applyTheme(theme){document.documentElement.dataset.theme=theme;$('theme').textContent=theme==='dark'?'Светлая тема':'Тёмная тема';}let savedTheme;try{savedTheme=localStorage.getItem('utro_theme');}catch(_){}applyTheme(savedTheme||((window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light'));$('theme').addEventListener('click',()=>{const theme=document.documentElement.dataset.theme==='dark'?'light':'dark';applyTheme(theme);try{localStorage.setItem('utro_theme',theme);}catch(_){}});
+$('export').addEventListener('click',()=>{const rows=[['Дата','Площадка','Полнота данных','Валюта','Заказанные позиции','Сумма заказов','Выкупы по дате','Возвраты','Предварительно начислено','Отменённые заказы периода','Доставлено из заказов периода']];for(const day of eachDay(current.from,current.to))for(const id of MARKET_ORDER){const row=D.markets[id].days[day];rows.push([day,title(id),row?'доступен':'нет данных',D.markets[id].currency||'',row?.orders??'',row?.orderAmount==null?'':row.orderAmount/100,row?.buyouts??'',row?.returns??'',row?.netPayout==null?'':row.netPayout/100,row?.cancelledOrders??'',id==='oz'?(row?.deliveredCohort??''):'']);}const quote=value=>'"'+String(value).replace(/"/g,'""')+'"';const text='\ufeff'+rows.map(row=>row.map(quote).join(';')).join('\r\n');const link=document.createElement('a'),url=URL.createObjectURL(new Blob([text],{type:'text/csv;charset=utf-8'}));link.href=url;link.download=`ecovelle-${current.from}-${current.to}.csv`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
+renderStock();renderHealth();setRange(current.from,current.to);
+</script></body></html>

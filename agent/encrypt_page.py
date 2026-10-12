@@ -29,7 +29,7 @@ blob = json.dumps({'gz': 1, 'salt': base64.b64encode(salt).decode(), 'iv': base6
 
 wrapper = f'''<title>{title}</title>
 <style>
-:root{{color-scheme:light;--bg:#f4f4f0;--surface:#fcfcfb;--line:#e1e0d9;--ink:#141412;--ink-2:#52514e;--muted:#898781;--accent:#1c5cab;--crit:#d03b3b}}
+:root{{color-scheme:light;--bg:#f6f7f4;--surface:#ffffff;--line:#e1e8e0;--ink:#20342b;--ink-2:#68796e;--muted:#68796e;--accent:#41674b;--crit:#d03b3b}}
 @media (prefers-color-scheme:dark){{:root:not([data-theme="light"]){{color-scheme:dark;--bg:#111214;--surface:#1a1a19;--line:#2c2c2a;--ink:#f4f4f0;--ink-2:#c3c2b7;--accent:#6da7ec}}}}
 :root[data-theme="dark"]{{color-scheme:dark;--bg:#111214;--surface:#1a1a19;--line:#2c2c2a;--ink:#f4f4f0;--ink-2:#c3c2b7;--accent:#6da7ec}}
 body{{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}}
@@ -47,8 +47,8 @@ body{{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-ap
 <div id="gate"><form id="f">
 <h1>Утро Ecovelle</h1>
 <p>Сводка защищена паролем. Введите его, чтобы открыть.</p>
-<input id="pw" type="password" autocomplete="current-password" placeholder="Пароль" autofocus>
-<label><input type="checkbox" id="rem" style="width:auto;padding:0" checked> Запомнить на этом устройстве</label>
+<input id="pw" type="password" autocomplete="current-password" placeholder="Пароль" aria-label="Пароль" required autofocus>
+<label><input type="checkbox" id="rem" style="width:auto;padding:0"> Запомнить на этом устройстве</label>
 <button id="btn" type="submit">Открыть</button>
 <div id="err"></div>
 </form></div>
@@ -58,16 +58,16 @@ body{{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-ap
 // Если страницу восстановили из bfcache, или вкладку открыли спустя >10 минут простоя — форсируем свежую загрузку с обходом кеша.
 (function(){{
   try{{
-    var K='utro_seen', now=Date.now();
+    var K='utro_seen';
     function bust(){{location.replace(location.pathname+'?_r='+Date.now());}}
     window.addEventListener('pageshow',function(e){{if(e.persisted)bust();}});
     document.addEventListener('visibilitychange',function(){{
       if(document.visibilityState==='visible'){{
         var last=+(sessionStorage.getItem(K)||0);
-        if(last&&now-last>10*60*1000)bust();
+        if(last&&Date.now()-last>10*60*1000)bust();
       }}
     }});
-    sessionStorage.setItem(K,String(now));
+    sessionStorage.setItem(K,String(Date.now()));
   }}catch(_){{}}
 }})();
 const E=JSON.parse(document.getElementById('enc').textContent);
@@ -83,13 +83,12 @@ async function unlock(pw){{
 }}
 function render(html){{
   // самый надёжный способ во всех браузерах (включая Safari): полностью переписать документ расшифрованной страницей
-  const full='<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"></head><body>'+html+'</body></html>';
-  document.open();document.write(full);document.close();
+  document.open();document.write(html);document.close();
   if(location.search.includes('debug')){{setTimeout(()=>{{const d=document.createElement('pre');d.style.cssText='position:fixed;bottom:0;left:0;right:0;background:#000;color:#0f0;font:11px monospace;padding:6px;z-index:99999;white-space:pre-wrap';d.textContent='UA: '+navigator.userAgent+' | styleSheets: '+document.styleSheets.length+' rules: '+[...document.styleSheets].map(s=>{{try{{return s.cssRules.length}}catch(e){{return 'err'}}}}).join(',')+' | card radius: '+(document.querySelector('.card')?getComputedStyle(document.querySelector('.card')).borderRadius:'no .card');document.body.appendChild(d)}},1500)}}
 }}
 const f=document.getElementById('f'),err=document.getElementById('err'),btn=document.getElementById('btn'),inp=document.getElementById('pw');
 f.addEventListener('submit',async e=>{{e.preventDefault();err.textContent='';btn.disabled=true;btn.textContent='Открываю…';
-  try{{const html=await unlock(inp.value);try{{if(document.getElementById('rem').checked)localStorage.setItem('utro_pw',inp.value)}}catch(_){{}}render(html)}}
+  try{{const html=await unlock(inp.value);try{{if(document.getElementById('rem').checked)localStorage.setItem('utro_pw',inp.value);else localStorage.removeItem('utro_pw')}}catch(_){{}}render(html)}}
   catch(e){{err.textContent=e&&e.message==='old-browser'?'Браузер устарел — откройте в Safari/Chrome последней версии':'Неверный пароль';btn.disabled=false;btn.textContent='Открыть';inp.select()}}}});
 (async()=>{{let saved=null;try{{saved=localStorage.getItem('utro_pw')}}catch(_){{}}if(saved){{try{{render(await unlock(saved))}}catch(_){{try{{localStorage.removeItem('utro_pw')}}catch(__){{}}}}}}}})();
 </script>
