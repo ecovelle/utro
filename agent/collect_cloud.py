@@ -211,16 +211,18 @@ def oz_finance(state, status):
                 numbers.append(number)
             if day >= (today - dt.timedelta(days=7)).isoformat():
                 recent_numbers.add(number)
+    legacy = {n for n in numbers if n in postings and any('seller_price' not in row for row in postings[n])}
     needed = ([n for n in numbers if n in recent_numbers and n not in postings] +
               [n for n in numbers if n in recent_numbers and n in postings] +
-              [n for n in numbers if n not in recent_numbers and n not in postings])[:400]
+              [n for n in numbers if n not in recent_numbers and (n not in postings or n in legacy)])[:400]
     status['oz_quantities'] = {'ok': True}
-    for offset in range(0, len(needed), 20):
+    # The beta endpoint throttles large batches in this cabinet; request one posting.
+    for offset in range(len(needed)):
         try:
-            batch = fetch_postings(oz_post, needed[offset:offset + 20])
+            batch = fetch_postings(oz_post, needed[offset:offset + 1])
             sale_types = {int(i) for i, value in finance['types'].items() if value['name'] == 'SaleCommission'}
             for number, rows in batch.items():
-                postings[number] = [{k: row.get(k) for k in ('accrual_date','sku','type_id','quantity','accrued')}
+                postings[number] = [{k: row.get(k) for k in ('accrual_date','sku','type_id','quantity','accrued','seller_price')}
                                     for row in rows if row.get('type_id') in sale_types]
         except Exception:
             status['oz_quantities'] = {'ok': False, 'error': 'Не все партии количеств обновились; успешные ответы сохранены'}
