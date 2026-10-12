@@ -115,7 +115,7 @@ def month_shift(day, months):
 def oz_orders(state):
     # Monthly windows avoid API range limits. Refresh recent statuses; keep older records.
     first = month_shift(today, -int(os.environ.get('HISTORY_MONTHS', '24')))
-    start = first if not state['coverage']['oz'] else max(first, today - dt.timedelta(days=89))
+    start = first if not state['coverage']['oz'] or state.get('oz_api_version') != 2 else max(first, today - dt.timedelta(days=89))
     end = today + dt.timedelta(days=1)
     pending, sku_map = {}, {}
     left = start
@@ -123,19 +123,15 @@ def oz_orders(state):
         right = min(month_shift(left.replace(day=1), 1), end)
         since = dt.datetime.combine(left, dt.time(), ZoneInfo('Europe/Moscow')).astimezone(dt.timezone.utc).isoformat()
         to = (dt.datetime.combine(right, dt.time(), ZoneInfo('Europe/Moscow')).astimezone(dt.timezone.utc) - dt.timedelta(milliseconds=1)).isoformat()
-        for scheme, path in [('fbo', '/v2/posting/fbo/list'), ('fbs', '/v3/posting/fbs/list')]:
-            offset = 0
-            seen = set()
-            while True:
-                response = oz_post(path, {'dir': 'ASC', 'filter': {'since': since, 'to': to},
-                                         'limit': 1000, 'offset': offset, 'with': {'analytics_data': True}})
-                if not isinstance(response, dict) or 'result' not in response:
-                    raise RuntimeError('Ozon: изменился формат ' + path)
-                result = response['result']
-                if scheme == 'fbs' and (not isinstance(result, dict) or not isinstance(result.get('has_next'), bool)):
-                    raise RuntimeError('Ozon: нет признака завершения пагинации FBS')
-                rows = result if scheme == 'fbo' else result.get('postings')
-                if not isinstance(rows, list):
+        for scheme, path in [('fbo', '/v3/posting/fbo/list'), ('fbs', '/v4/posting/fbs/list')]:
+            cursor, seen, cursors = '', set(), set()
+            for page in range(2000):
+                response = oz_post(path, {'sort_dir': 'ASC', 'filter': {'since': since, 'to': to},
+                                         'limit': 100, 'cursor': cursor, 'with': {'analytics_data': True}})
+                if not isinstance(response, dict) or not isinstance(response.get('has_next'), bool):
+                    raise RuntimeError('Ozon: нет признака завершения пагинации ' + scheme.upper())
+                rows = response.get('postings')
+                if not isinstance(rows, list) or not isinstance(response.get('cursor'), str):
                     raise RuntimeError('Ozon: нет списка отправлений ' + path)
                 page_ids = {r.get('posting_number') for r in rows}
                 if rows and page_ids <= seen:
@@ -148,15 +144,19 @@ def oz_orders(state):
                     normalized = normalize_oz(record, scheme)
                     if normalized:
                         pending[normalized[0]] = normalized[1]
-                more = len(rows) == 1000 if scheme == 'fbo' else result.get('has_next')
-                if not more:
+                if not response['has_next']:
                     break
-                if not rows or offset + 1000 >= 20000:
-                    raise RuntimeError('Ozon: окно слишком большое для пагинации; данные не опубликованы как полные')
-                offset += 1000
+                next_cursor = response['cursor']
+                if not rows or not next_cursor or next_cursor == cursor or next_cursor in cursors:
+                    raise RuntimeError('Ozon: курсор отправлений не продвигается; данные не опубликованы как полные')
+                cursors.add(next_cursor)
+                cursor = next_cursor
+            else:
+                raise RuntimeError('Ozon: превышен лимит страниц отправлений')
         left = right
     state['oz'].update(pending)
     state.setdefault('oz_sku_map', {}).update(sku_map)
+    state['oz_api_version'] = 2
     state['coverage']['oz'] = add_coverage(state['coverage']['oz'], start.isoformat(), (today-dt.timedelta(days=1)).isoformat())
     state['updated']['oz'] = now.isoformat()
     log(f'Ozon: {len(pending)} отправлений обновлено')
@@ -217,7 +217,12 @@ def oz_finance(state, status):
               [n for n in numbers if n not in recent_numbers and (n not in postings or n in legacy)])[:400]
     status['oz_quantities'] = {'ok': True}
     # The beta endpoint throttles large batches in this cabinet; request one posting.
+    quantity_started = time.monotonic()
+    quantity_budget = max(60, min(900, int(os.environ.get('OZON_QUANTITY_BUDGET_SECONDS', '600'))))
     for offset in range(len(needed)):
+        if time.monotonic() - quantity_started >= quantity_budget:
+            status['oz_quantities'] = {'ok': False, 'error': 'Лимит времени загрузки количеств; продолжим в следующем запуске'}
+            break
         try:
             batch = fetch_postings(oz_post, needed[offset:offset + 1])
             sale_types = {int(i) for i, value in finance['types'].items() if value['name'] == 'SaleCommission'}

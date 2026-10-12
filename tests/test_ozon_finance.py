@@ -180,6 +180,18 @@ class FinanceCalculationTests(unittest.TestCase):
         self.assertEqual(state['oz_finance']['days'][DAY]['buyouts'],120)
         self.assertTrue(set(calls[21]).isdisjoint(set(n for call in calls[:20] for n in call)))
 
+    def test_quantity_time_budget_retains_cash_and_successful_cache(self):
+        state=empty_history();state['oz_sku_map']=SKU_MAP;status={}
+        rows=[event(ident=1),event(ident=2)]
+        rows[0]['unit_number']='p1';rows[1]['unit_number']='p2'
+        with patch.object(collector,'today',dt.date(2026,10,12)),patch.object(collector,'fetch_types',return_value=TYPES),patch.object(collector,'fetch_day',side_effect=lambda post,day:rows if day==DAY else []),patch.object(collector,'fetch_postings',return_value={'p1':[line()]}) as fetch,patch.object(collector.time,'monotonic',side_effect=[0,0,601]),patch.object(collector,'log'):
+            collector.oz_finance(state,status)
+        self.assertEqual(fetch.call_count,1)
+        self.assertEqual(set(state['oz_finance']['postings']),{'p1'})
+        self.assertEqual(state['oz_finance']['days'][DAY]['amounts']['KZT'],5000)
+        self.assertIsNone(state['oz_finance']['days'][DAY]['buyouts'])
+        self.assertFalse(status['oz_quantities']['ok'])
+
 
 class RateLimitTests(unittest.TestCase):
     def test_retry_after_is_honored(self):

@@ -29,9 +29,19 @@ def covered(day, intervals):
 
 
 def normalize_oz(posting, scheme):
-    items = [{'sku': r['offer_id'], 'q': int(r['quantity']), 'price': money(r.get('price')),
-              'currency': r.get('currency_code')}
-             for r in posting.get('products', []) if r.get('offer_id') in OZ_ART]
+    items = []
+    for record in posting.get('products', []):
+        if record.get('offer_id') not in OZ_ART:
+            continue
+        price = record.get('price')
+        currency = record.get('currency_code')
+        if isinstance(price, dict):
+            currency = price.get('currency')
+            price = price.get('amount')
+        if price is None:
+            raise ValueError('Ozon: нет цены товара в отправлении')
+        items.append({'sku': record['offer_id'], 'q': int(record['quantity']), 'price': money(price),
+                      'currency': currency})
     if not items:
         return None
     ident = posting.get('posting_number')
@@ -44,7 +54,7 @@ def normalize_oz(posting, scheme):
                                   'items': items, 'city': analytics.get('city') or 'Не указан',
                                   'country': analytics.get('country') or '',
                                   'warehouse': analytics.get('warehouse_name') or analytics.get('warehouse') or '',
-                                  'cancelReason': str(cancellation.get('cancel_reason') or posting.get('cancel_reason_id') or 'Не указана')}
+                                  'cancelReason': str(cancellation.get('cancel_reason') or cancellation.get('cancel_reason_id') or posting.get('cancel_reason_id') or 'Не указана')}
 
 
 def normalize_wb(record, kind):

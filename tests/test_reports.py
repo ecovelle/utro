@@ -224,11 +224,47 @@ class CollectorTests(unittest.TestCase):
 
     def test_ozon_changed_fbs_pagination_does_not_publish_partial_cohort(self):
         s = state()
-        with patch.object(collector, 'today', dt.date(2026, 10, 12)), patch.dict(collector.os.environ, {'HISTORY_MONTHS':'1'}), patch.object(collector, 'oz_post', side_effect=[{'result':[posting()]}, {'result':{'postings':[]}}]):
+        with patch.object(collector, 'today', dt.date(2026, 10, 12)), patch.dict(collector.os.environ, {'HISTORY_MONTHS':'1'}), patch.object(collector, 'oz_post', side_effect=[{'postings':[posting()], 'has_next':False, 'cursor':''}, {'result':{'postings':[]}}]):
             with self.assertRaisesRegex(RuntimeError, 'пагинации'):
                 collector.oz_orders(s)
         self.assertEqual(s['oz'], {})
         self.assertEqual(s['coverage']['oz'], [])
+
+    def test_ozon_cursor_continues_short_page_and_accepts_terminal_cursor(self):
+        s = state()
+        calls = []
+        def api(path, body):
+            calls.append((path, body))
+            if path.endswith('/fbo/list') and body['cursor'] == '':
+                return {'postings':[posting()], 'has_next':True, 'cursor':'next'}
+            if path.endswith('/fbo/list'):
+                return {'postings':[posting(posting_number='p2')], 'has_next':False, 'cursor':'terminal'}
+            return {'postings':[], 'has_next':False, 'cursor':''}
+        with patch.object(collector, 'today', dt.date(2026,10,12)), patch.dict(collector.os.environ, {'HISTORY_MONTHS':'1'}), patch.object(collector, 'oz_post', side_effect=api), patch.object(collector, 'log'):
+            collector.oz_orders(s)
+        self.assertEqual(len(s['oz']), 2)
+        self.assertEqual(s['oz_api_version'], 2)
+        self.assertEqual({p for p,_ in calls}, {'/v3/posting/fbo/list','/v4/posting/fbs/list'})
+        self.assertTrue(any(b['cursor'] == 'next' for _,b in calls))
+        self.assertTrue(all(b['limit'] == 100 and b['sort_dir'] == 'ASC' and 'offset' not in b for _,b in calls))
+
+    def test_ozon_stuck_cursor_does_not_update_existing_history(self):
+        s = state()
+        s['oz'] = {'old':{'keep':True}}
+        s['coverage']['oz'] = [['2026-10-01','2026-10-11']]
+        replies = [{'postings':[posting()], 'has_next':True, 'cursor':'next'},
+                   {'postings':[posting(posting_number='p2')], 'has_next':True, 'cursor':'next'}]
+        with patch.object(collector, 'today', dt.date(2026,10,12)), patch.dict(collector.os.environ, {'HISTORY_MONTHS':'1'}), patch.object(collector, 'oz_post', side_effect=replies):
+            with self.assertRaisesRegex(RuntimeError, 'не продвигается'):
+                collector.oz_orders(s)
+        self.assertEqual(s['oz'], {'old':{'keep':True}})
+        self.assertNotIn('oz_api_version', s)
+        self.assertEqual(s['coverage']['oz'], [['2026-10-01','2026-10-11']])
+
+    def test_ozon_new_price_object_keeps_currency_and_cents(self):
+        _, row = normalize_oz(posting(products=[{'offer_id':'ecovelle_245','quantity':2,'price':{'amount':'3500.19','currency':'KZT'}}]), 'fbo')
+        self.assertEqual(row['items'][0]['price'], 350019)
+        self.assertEqual(row['items'][0]['currency'], 'KZT')
 
     def test_both_core_sources_failing_preserves_history_and_page(self):
         from contextlib import ExitStack
