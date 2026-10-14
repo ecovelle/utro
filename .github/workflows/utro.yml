@@ -3,6 +3,10 @@ name: Утро Ecovelle
 on:
   workflow_dispatch:
     inputs:
+      wb_analytics_only:
+        description: Пересобрать заказы WB из воронки за 90 дней (около 32 минут)
+        type: boolean
+        default: false
       probe_only:
         description: Проверить доступ к начислениям Ozon без публикации сводки
         type: boolean
@@ -28,7 +32,7 @@ jobs:
   build:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -59,6 +63,7 @@ jobs:
           OZON_API_KEY:   ${{ secrets.OZON_API_KEY }}
           WB_TOKEN:       ${{ secrets.WB_TOKEN }}
           PAGE_PASS:      ${{ secrets.PAGE_PASS }}
+          WB_ANALYTICS_ONLY: ${{ inputs.wb_analytics_only }}
         run: python3 collect_cloud.py
 
       - name: Собрать и зашифровать страницу

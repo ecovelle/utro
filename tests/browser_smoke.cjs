@@ -40,6 +40,17 @@ const {chromium} = require(process.env.PLAYWRIGHT_PATH || 'playwright');
  await page.setViewportSize({width:390,height:844});await page.locator('[data-period="7d"]').click();
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true);
  await page.screenshot({path:'preview/mobile.png',fullPage:true});
+ // Funnel orders can be KZT while event payouts stay RUB. Mixed currencies must not sum.
+ await page.evaluate(()=>{const r=D.markets.wb.days['2026-10-11'];Object.assign(r,{orders:75,statisticsOrders:56,orderSource:'analytics',orderCurrency:'KZT',orderAmount:37500000,netPayout:12300,orderUpdatedAt:'2026-10-12T08:00:00+03:00'});setRange('2026-10-11','2026-10-11');renderHealth();});
+ assert.equal(await page.locator('#summary .value').first().innerText(),'75');
+ assert.match(await page.locator('#summary article').first().innerText(),/375\s000 ₸/);
+ assert.match(await page.locator('#summary article').first().innerText(),/123 ₽/);
+ assert.match(await page.locator('#summary article').first().innerText(),/Воронка продаж WB/);
+ assert.match(await page.locator('#health').textContent(),/56/);
+ await page.evaluate(()=>setRange('2026-10-10','2026-10-11'));
+ assert.equal(await page.locator('#summary article .kpi-amount .value').first().innerText(),'—');
+ assert.match(await page.locator('#summary article').first().innerText(),/Предварительно/);
+ await page.locator('[data-period="7d"]').click();
  // Render a missing-source/error state and confirm no crash or fabricated numeric totals.
  await page.evaluate(()=>{D.markets.oz.days={};D.markets.oz.coverage=[];D.markets.wb.days={};D.markets.wb.coverage=[];D.snapshots={};D.status.oz={ok:false,error:'HTTP 401'};D.status.wb={ok:false,error:'HTTP 429'};renderStock();renderHealth();render();});
  assert.match(await page.locator('#notice').textContent(),/0 из 7/);

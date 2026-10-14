@@ -6,6 +6,7 @@ import os
 import sys
 from pathlib import Path
 from history import read_history
+from wb_analytics import apply_orders
 from metrics import aggregate, covered, NAMES, OZ_ART, WB_ART
 
 HERE = Path(__file__).resolve().parent
@@ -42,6 +43,8 @@ def build_data(state):
                 defaults.update(rows.get(day, {}))
                 days[day] = defaults
             cursor += dt.timedelta(days=1)
+        if market == 'wb':
+            apply_orders(days, state.get('wb_analytics', {}).get('days', {}))
         codes = {item.get('currency') for record in state['oz'].values() if period_start <= record['date'] <= period_end for item in record['items'] if item.get('currency')} if market == 'oz' else {'RUB'}
         currency = next(iter(codes)) if len(codes) == 1 else (os.environ.get('OZON_CURRENCY', 'KZT') if not codes else None)
         if currency is None:
@@ -99,6 +102,8 @@ def main():
               'finance_currency_known': data['markets']['oz']['financeCurrency'] is not None,
               'quantities_last_7_days_confirmed': all(day in finance and finance[day]['buyouts'] is not None for day in recent),
               'quantity_gap_reasons': sorted({finance[day]['quantityError'] for day in recent if day in finance and finance[day]['quantityError']}),
+              'wb_orders_last_7_days_analytics': all(data['markets']['wb']['days'].get(day, {}).get('orderSource') == 'analytics' for day in recent),
+              'wb_orders_sources_agree_last_7_days': all(data['markets']['wb']['days'].get(day, {}).get('ordersDiffer') is False for day in recent),
               'sources': {name: bool(value.get('ok')) for name, value in data['status'].items()}}
     print('REPORT_HEALTH=' + json.dumps(health, ensure_ascii=False))
     (HERE / 'utro-ecovelle-plain.html').write_text(render(data), encoding='utf-8')
