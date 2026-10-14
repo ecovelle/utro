@@ -293,7 +293,7 @@ class CollectorTests(unittest.TestCase):
             stack.enter_context(patch.object(collector, 'log'))
             stack.enter_context(patch.object(collector.sys, 'argv', ['collect_cloud.py']))
             writer = stack.enter_context(patch.object(collector, 'write_history'))
-            for name in ['oz_orders','wb_orders_sales','oz_finance','oz_stock','oz_actions','wb_stock','wb_prices','wb_feedback','wb_promos']:
+            for name in ['oz_orders','wb_orders_sales','wb_analytics','oz_finance','oz_stock','oz_actions','wb_stock','wb_prices','wb_feedback','wb_promos']:
                 stack.enter_context(patch.object(collector, name, side_effect=RuntimeError('source unavailable')))
             with self.assertRaisesRegex(RuntimeError, 'Оба источника'):
                 collector.main()
@@ -311,7 +311,7 @@ class CollectorTests(unittest.TestCase):
             writer = stack.enter_context(patch.object(collector, 'write_history'))
             stack.enter_context(patch.object(collector, 'oz_orders', side_effect=RuntimeError('API failed')))
             stack.enter_context(patch.object(collector, 'wb_orders_sales', return_value=None))
-            for name in ['oz_finance','oz_stock','oz_actions','wb_stock','wb_prices','wb_feedback','wb_promos']:
+            for name in ['wb_analytics','oz_finance','oz_stock','oz_actions','wb_stock','wb_prices','wb_feedback','wb_promos']:
                 stack.enter_context(patch.object(collector, name, return_value={}))
             collector.main()
             saved = writer.call_args.args[0]
