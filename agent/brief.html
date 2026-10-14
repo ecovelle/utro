@@ -30,7 +30,7 @@ main{max-width:1304px;padding:24px 36px 50px}.preview-strip{background:#e7eaef;c
 
 <main><div class="appbar"><div class="wordmark"><span class="sun-logo"><svg width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 17h16M7 14a5 5 0 0 1 10 0M12 3v3M3 10l3 1M18 11l3-1M5.5 5.5l2 2M16.5 7.5l2-2M8 21h8"/></svg></span>утро <small>ECOVELLE</small></div><p class="sub">Показатели Wildberries и Ozon за выбранный период</p><nav class="appnav"><a href="#overview">Обзор</a><a href="#dynamics">Динамика</a><a href="#products">Товары</a><a href="#stock">Остатки</a></nav></div>
 <header class="top"><div><div class="eyebrow">Wildberries + Ozon</div><h1>Продажи и начисления</h1></div><div class="top-actions"><button id="theme" type="button" aria-label="Переключить тему">Тёмная тема</button><span class="date-badge" id="generated"></span><button id="export" type="button">↓ CSV</button><button id="refresh" type="button" aria-label="Обновить страницу">↻</button></div></header>
-<section class="controls" aria-label="Выбор периода"><div class="pills" id="periods"><button data-period="yesterday">Вчера</button><button data-period="7d" aria-pressed="true">7 дней</button><button data-period="1m">Месяц</button><button data-period="90d">3 месяца · 90 дней</button></div></section>
+<section class="controls" aria-label="Выбор периода"><div class="pills" id="periods"><button data-period="yesterday" aria-pressed="true">Вчера</button><button data-period="7d">7 дней</button><button data-period="1m">Месяц</button><button data-period="90d">3 месяца · 90 дней</button></div></section>
 <div id="sources" class="status"></div>
 <section id="overview"><div class="grid" id="summary"></div></section>
 <section id="dynamics" class="section"><div class="section-head"><h2>Заказы и выкупы</h2><p class="note" id="chart-hint"></p></div><div class="grid" id="charts"></div></section>
@@ -61,7 +61,7 @@ const eachDay=(start,end)=>{const result=[];for(let day=start;day<=end;day=shift
 const title=id=>id==='oz'?'Ozon':'Wildberries';
 const cls=id=>id==='oz'?'oz':'wb';
 const head=(id,note='',badge='')=>`<div class="market-head ${cls(id)}"><div class="logo">${id==='oz'?'OZ':'WB'}</div><div><h3>${title(id)}</h3><p class="note">${esc(note)}</p></div>${badge?`<span class="badge ${badge.includes('непол')?'warn':''}">${esc(badge)}</span>`:''}</div>`;
-const start=D.periodStart||shift(D.today,-90),end=shift(D.today,-1);let current={from:shift(D.today,-7),to:end};
+const start=D.periodStart||shift(D.today,-90),end=shift(D.today,-1);let current={from:end,to:end};
 const span=current=>Math.round((date(current.to)-date(current.from))/86400000)+1;
 function totals(id,range){const market=D.markets[id],expected=eachDay(range.from,range.to),days=expected.filter(day=>Object.hasOwn(market.days,day));const out={count:days.length,expected:expected.length,complete:days.length===expected.length,products:{},geo:{}};
  for(const key of ['orders','orderAmount','active','cancelledOrders','buyouts','returns','netPayout','deliveredCohort','cancels','fbo','fbs']){const values=days.map(day=>market.days[day][key]);out[key]=values.length&&values.every(v=>v!==null&&v!==undefined)?values.reduce((a,b)=>a+b,0):null;}
