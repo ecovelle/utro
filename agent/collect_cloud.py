@@ -35,7 +35,7 @@ def req(url, method='GET', headers=None, body=None, timeout=180, tries=4):
         r = urllib.request.Request(url, data=data, method=method, headers=headers or {})
         try:
             host = urllib.parse.urlsplit(url).netloc
-            interval = 65 if host == 'statistics-api.wildberries.ru' else (1.2 if host == 'api-seller.ozon.ru' else 0.6)
+            interval = 65 if host == 'statistics-api.wildberries.ru' else (21 if host == 'seller-analytics-api.wildberries.ru' else (1.2 if host == 'api-seller.ozon.ru' else 0.6))
             delay = interval - (time.monotonic() - LAST_REQUEST.get(host, 0))
             if delay > 0:
                 time.sleep(delay)
@@ -79,11 +79,10 @@ def req(url, method='GET', headers=None, body=None, timeout=180, tries=4):
 
 
 from history import read_history, write_history, add_coverage
-from metrics import WB_ART, OZ_ART, normalize_oz, normalize_wb
+from wb_analytics import collect as collect_wb_analytics
+from metrics import WB_NM, WB_ART, OZ_ART, normalize_oz, normalize_wb
 from ozon_finance import amount as finance_amount, fetch_types, fetch_day, fetch_postings, normalize_day
 
-WB_NM = {257464190: 'Ecovelle245', 269707700: 'Ecovelle290',
-         264934861: 'ecovelle155', 271132665: 'EcovelleMix'}
 WB_NORMAL = {'Ecovelle245': 504, 'Ecovelle290': 503, 'ecovelle155': 506, 'EcovelleMix': 606}
 now = dt.datetime.now(ZoneInfo('Europe/Moscow'))
 today = now.date()
@@ -103,6 +102,15 @@ def wb_get(host, path):
 def oz_post(path, body):
     return req('https://api-seller.ozon.ru' + path, 'POST',
                {'Client-Id': OZ_ID, 'Api-Key': OZ_KEY, 'Content-Type': 'application/json'}, body)
+
+
+def wb_analytics(state):
+    def post(path, body):
+        return req('https://seller-analytics-api.wildberries.ru' + path, 'POST',
+                   {'Authorization': WB_TOKEN, 'Content-Type': 'application/json'}, body, timeout=60, tries=2)
+    budget = 90 if os.environ.get('WB_ANALYTICS_ONLY') == 'true' else 17
+    collect_wb_analytics(state, post, today, now, budget=budget)
+    log('WB: воронка продаж обновлена')
 
 
 def month_shift(day, months):
@@ -456,6 +464,19 @@ def main():
     today = dt.date.fromisoformat(sys.argv[1]) if len(sys.argv) > 1 else now.date()
     password = env('PAGE_PASS')
     state = read_history(password)  # A wrong password must never erase accumulated history.
+    if os.environ.get('WB_ANALYTICS_ONLY') == 'true':
+        WB_TOKEN = env('WB_TOKEN')
+        if not state.get('run'):
+            raise RuntimeError('Сначала нужен обычный сбор данных')
+        try:
+            wb_analytics(state)
+            state['run']['status']['wb_analytics'] = {'ok': True}
+        except Exception as exc:
+            state['run']['status']['wb_analytics'] = {'ok': False, 'error': 'Воронка WB обновлена не полностью; успешные дни сохранены'}
+            log('!! wb_analytics: ' + str(exc))
+        # Preserve run.today and other source timestamps: this refreshes only WB orders.
+        write_history(state, password)
+        return
     OZ_ID, OZ_KEY, WB_TOKEN = env('OZON_CLIENT_ID'), env('OZON_API_KEY'), env('WB_TOKEN')
     status = {}
     core_success = 0
@@ -467,6 +488,12 @@ def main():
         except Exception as exc:
             status[name] = {'ok': False, 'error': str(exc)}
             log(f'!! {name}: {exc}')
+    try:
+        wb_analytics(state)
+        status['wb_analytics'] = {'ok': True}
+    except Exception as exc:
+        status['wb_analytics'] = {'ok': False, 'error': 'Воронка WB обновлена не полностью; сохранены успешные дни'}
+        log('!! wb_analytics: ' + str(exc))
     try:
         oz_finance(state, status)
     except Exception:
