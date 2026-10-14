@@ -5,6 +5,8 @@ import datetime as dt
 from zoneinfo import ZoneInfo
 
 WB_ART = ['Ecovelle245', 'Ecovelle290', 'ecovelle155', 'EcovelleMix']
+WB_NM = {257464190: 'Ecovelle245', 269707700: 'Ecovelle290',
+         264934861: 'ecovelle155', 271132665: 'EcovelleMix'}
 OZ_ART = ['ecovelle_245', 'ecovelle_290', 'ecovelle_155']
 NAMES = dict(zip(OZ_ART + WB_ART, ['Дневные', 'Ночные', 'Ежедневные',
                                  'Дневные', 'Ночные', 'Ежедневные', 'Микс (4 пачки)']))
@@ -58,7 +60,10 @@ def normalize_oz(posting, scheme):
 
 
 def normalize_wb(record, kind):
-    art = record.get('supplierArticle')
+    nm = record.get('nmId')
+    art = WB_NM.get(int(nm)) if str(nm).isdigit() else None
+    if art is None:
+        art = next((sku for sku in WB_ART if sku.casefold() == str(record.get('supplierArticle', '')).strip().casefold()), None)
     if art not in WB_ART:
         return None
     ident = record.get('srid') if kind == 'orders' else record.get('saleID')
